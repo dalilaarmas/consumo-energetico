@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Municipios</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 2rem;
+      background: #f5f7fb;
+      color: #222;
+    }
+
+    h1 {
+      margin-bottom: 1rem;
+    }
+
+    .mensaje {
+      margin-bottom: 1rem;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      background: #eef3ff;
+      color: #1f3b7a;
+      display: inline-block;
+    }
+
+    .error {
+      background: #ffeaea;
+      color: #8a1f1f;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    thead {
+      background: #1f4fa3;
+      color: white;
+    }
+
+    th, td {
+      padding: 0.9rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid #e6e6e6;
+    }
+
+    tbody tr:hover {
+      background: #f2f7ff;
+    }
+
+    .oculto {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>Lista de municipios</h1>
+
+  <div id="mensaje" class="mensaje">Cargando municipios...</div>
+
+  <table id="tablaMunicipios" class="oculto">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Nombre</th>
+      </tr>
+    </thead>
+    <tbody id="tbodyMunicipios">
+      <!-- Aquí se insertan las filas -->
+    </tbody>
+  </table>
+
+  <script>
+    const URL_API = "http://localhost:8080/consumo-energetico/api/municipios";
+
+    const mensaje = document.getElementById("mensaje");
+    const tabla = document.getElementById("tablaMunicipios");
+    const tbody = document.getElementById("tbodyMunicipios");
+
+    async function cargarMunicipios() {
+      try {
+        const respuesta = await fetch(URL_API);
+
+        if (!respuesta.ok) {
+          throw new Error(`Error HTTP: ${respuesta.status}`);
+        }
+
+        const municipios = await respuesta.json();
+
+        // Limpiar por si se vuelve a cargar
+        tbody.innerHTML = "";
+
+        // Recorrer el array y crear una fila por municipio
+        municipios.forEach(municipio => {
+          const fila = document.createElement("tr");
+
+          const celdaId = document.createElement("td");
+          celdaId.textContent = municipio.id;
+
+          const celdaNombre = document.createElement("td");
+          celdaNombre.textContent = municipio.nombre;
+
+          fila.appendChild(celdaId);
+          fila.appendChild(celdaNombre);
+
+          tbody.appendChild(fila);
+        });
+
+        mensaje.textContent = `Municipios cargados: ${municipios.length}`;
+        tabla.classList.remove("oculto");
+
+      } catch (error) {
+        mensaje.textContent = "No se pudieron cargar los municipios.";
+        mensaje.classList.add("error");
+        console.error("Error al consumir la API:", error);
+      }
+    }
+
+    cargarMunicipios();
+  </script>
+</body>
+</html>

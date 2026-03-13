@@ -30,12 +30,12 @@ public class CupsDao {
         return out;
     }
 
-    public Cups findByCodigo(String codigo) throws SQLException {
+    public Cups findByCodigo(String codigo) {
         String sql = """
-                SELECT codigo, direccion, codigo_postal, municipio_id, distribuidor_id
-                FROM cups
-                WHERE codigo = ?
-                """;
+            SELECT codigo, direccion, codigo_postal, distribuidor_id
+            FROM cups
+            WHERE codigo = ?
+            """;
 
         try (Connection con = Db.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -43,10 +43,22 @@ public class CupsDao {
             ps.setString(1, codigo);
 
             try (ResultSet rs = ps.executeQuery()) {
-                if (!rs.next()) return null;
-                return map(rs);
+                if (rs.next()) {
+                    Cups cups = new Cups();
+                    cups.setCodigo(rs.getString("codigo"));
+                    cups.setDireccion(rs.getString("direccion"));
+                    cups.setCodigoPostal(rs.getInt("codigo_postal"));
+                    cups.setDistribuidorId(rs.getInt("distribuidor_id"));
+                    return cups;
+                }
             }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Error obteniendo cups por codigo", e);
         }
+
+        return null;
     }
 
     // Filtrar por municipio (útil para REST: GET /cups?municipio=ADEJE)

@@ -1,6 +1,7 @@
 package com.dalila.dao;
 
 import com.dalila.db.Db;
+import com.dalila.entity.Cups;
 import com.dalila.entity.Municipio;
 
 import java.sql.*;
@@ -104,6 +105,69 @@ public class MunicipioDao {
 
         } catch (Exception e) {
             throw new RuntimeException("Error obteniendo municipios", e);
+        }
+
+        return lista;
+    }
+
+    public Municipio findById(Long id) {
+        String sql = "SELECT id, nombre FROM municipio WHERE id = ?";
+
+        try (Connection con = Db.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setLong(1, id);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    Municipio municipio = new Municipio();
+                    municipio.setId(rs.getInt("id"));
+                    municipio.setNombre(rs.getString("nombre"));
+                    return municipio;
+                }
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Error obteniendo municipio por id", e);
+        }
+
+        return null;
+    }
+    public List<Cups> findCupsByMunicipio(Long idMunicipio) {
+
+        List<Cups> lista = new ArrayList<>();
+
+        String sql = """
+        SELECT codigo, direccion, codigo_postal, distribuidor_id
+        FROM cups
+        WHERE municipio_id = ?
+        ORDER BY codigo
+    """;
+
+        try (Connection con = Db.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setLong(1, idMunicipio);
+
+            try (ResultSet rs = ps.executeQuery()) {
+
+                while (rs.next()) {
+
+                    Cups cups = new Cups();
+
+                    cups.setCodigo(rs.getString("codigo"));
+                    cups.setDireccion(rs.getString("direccion"));
+                    cups.setCodigoPostal(rs.getInt("codigo_postal"));
+                    cups.setDistribuidorId(rs.getInt("distribuidor_id"));
+
+                    lista.add(cups);
+                }
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Error obteniendo cups por municipio", e);
         }
 
         return lista;

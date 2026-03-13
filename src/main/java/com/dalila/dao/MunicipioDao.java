@@ -85,4 +85,27 @@ public class MunicipioDao {
         m.setNombre(rs.getString("nombre"));
         return m;
     }
+
+    public List<Municipio> findAll() {
+        List<Municipio> lista = new ArrayList<>();
+
+        String sql = "SELECT id, nombre FROM municipio ORDER BY nombre";
+
+        try (Connection con = Db.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                Municipio municipio = new Municipio();
+                municipio.setId(rs.getInt("id"));
+                municipio.setNombre(rs.getString("nombre"));
+                lista.add(municipio);
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException("Error obteniendo municipios", e);
+        }
+
+        return lista;
+    }
 }

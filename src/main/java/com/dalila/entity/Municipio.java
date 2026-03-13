@@ -11,7 +11,7 @@ public class Municipio {
         this.nombre = nombre;
     }
 
-    public int getId() { return id; }
+    public long getId() { return id; }
     public void setId(int id) { this.id = id; }
 
     public String getNombre() { return nombre; }

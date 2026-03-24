@@ -1,5 +1,9 @@
 package com.dalila;
 
+<<<<<<< HEAD
+=======
+import com.dalila.db.Db;
+>>>>>>> cb16ab4 (Primer commit: backend + frontend integrado)
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -11,12 +15,15 @@ import java.util.List;
 
 public class ImportJson {
 
+<<<<<<< HEAD
     private static final String URL =
             "jdbc:mysql://localhost:3306/consumo_energetico?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC";
     private static final String USER = "consumo_app";
     private static final String PASS = "consumo123";
 
     // Archivos con guiones, dentro de src/main/resources/data/
+=======
+>>>>>>> cb16ab4 (Primer commit: backend + frontend integrado)
     private static final String[] FILES = {
             "data/consumo-energetico-2022.json",
             "data/consumo-energetico-2023.json",
@@ -28,6 +35,7 @@ public class ImportJson {
     public static void main(String[] args) throws Exception {
         ObjectMapper mapper = new ObjectMapper();
 
+<<<<<<< HEAD
         try (Connection con = DriverManager.getConnection(URL, USER, PASS)) {
             con.setAutoCommit(false);
 
@@ -56,16 +64,50 @@ public class ImportJson {
                     "INSERT IGNORE INTO consumo(cups_codigo, fecha, consumo) VALUES (?,?,?)"
             );
 
+=======
+        try (
+                Connection con = Db.getConnection();
+                PreparedStatement insMunicipio = con.prepareStatement(
+                        "INSERT IGNORE INTO municipio(nombre) VALUES (?)");
+                PreparedStatement selMunicipio = con.prepareStatement(
+                        "SELECT id FROM municipio WHERE nombre=?");
+                PreparedStatement insDistribuidor = con.prepareStatement(
+                        "INSERT IGNORE INTO distribuidor(nombre) VALUES (?)");
+                PreparedStatement selDistribuidor = con.prepareStatement(
+                        "SELECT id FROM distribuidor WHERE nombre=?");
+                PreparedStatement upsertCups = con.prepareStatement("""
+                        INSERT INTO cups(codigo, direccion, codigo_postal, municipio_id, distribuidor_id)
+                        VALUES(?,?,?,?,?)
+                        ON DUPLICATE KEY UPDATE
+                          direccion=VALUES(direccion),
+                          codigo_postal=VALUES(codigo_postal),
+                          municipio_id=VALUES(municipio_id),
+                          distribuidor_id=VALUES(distribuidor_id)
+                        """);
+                PreparedStatement insConsumo = con.prepareStatement(
+                        "INSERT IGNORE INTO consumo(cups_codigo, fecha, consumo) VALUES (?,?,?)")
+        ) {
+            con.setAutoCommit(false);
+
+>>>>>>> cb16ab4 (Primer commit: backend + frontend integrado)
             int totalInsertConsumo = 0;
             int totalProcesados = 0;
 
             for (String resourcePath : FILES) {
+<<<<<<< HEAD
                 System.out.println("📥 Importando: " + resourcePath);
+=======
+                System.out.println("Importando: " + resourcePath);
+>>>>>>> cb16ab4 (Primer commit: backend + frontend integrado)
 
                 Root root;
                 try (InputStream is = ImportJson.class.getClassLoader().getResourceAsStream(resourcePath)) {
                     if (is == null) {
+<<<<<<< HEAD
                         System.out.println("⚠️ No encontrado en resources: " + resourcePath);
+=======
+                        System.out.println("No encontrado en resources: " + resourcePath);
+>>>>>>> cb16ab4 (Primer commit: backend + frontend integrado)
                         continue;
                     }
                     root = mapper.readValue(is, Root.class);
@@ -73,6 +115,7 @@ public class ImportJson {
 
                 int batch = 0;
 
+<<<<<<< HEAD
                 for (Municipio m : root.municipios) {
                     int municipioId = getOrCreateId(insMunicipio, selMunicipio, m.cups_municipio);
 
@@ -84,11 +127,36 @@ public class ImportJson {
                         upsertCups.setString(2, c.cups_direccion);
                         if (c.cups_codigo_postal == null) upsertCups.setNull(3, Types.INTEGER);
                         else upsertCups.setInt(3, c.cups_codigo_postal);
+=======
+                if (root.municipios == null) {
+                    continue;
+                }
+
+                for (Municipio m : root.municipios) {
+                    int municipioId = getOrCreateId(insMunicipio, selMunicipio, m.cups_municipio);
+
+                    if (m.cups == null) {
+                        continue;
+                    }
+
+                    for (Cups c : m.cups) {
+                        int distribuidorId = getOrCreateId(insDistribuidor, selDistribuidor, c.cups_distribuidor);
+
+                        upsertCups.setString(1, c.cups_codigo);
+                        upsertCups.setString(2, c.cups_direccion);
+
+                        if (c.cups_codigo_postal == null) upsertCups.setNull(3, Types.INTEGER);
+                        else upsertCups.setInt(3, c.cups_codigo_postal);
+
+>>>>>>> cb16ab4 (Primer commit: backend + frontend integrado)
                         upsertCups.setInt(4, municipioId);
                         upsertCups.setInt(5, distribuidorId);
                         upsertCups.executeUpdate();
 
+<<<<<<< HEAD
                         // consumos
+=======
+>>>>>>> cb16ab4 (Primer commit: backend + frontend integrado)
                         if (c.consumos != null) {
                             for (Consumo co : c.consumos) {
                                 totalProcesados++;
@@ -116,6 +184,7 @@ public class ImportJson {
                 totalInsertConsumo += countInserted(res);
                 con.commit();
 
+<<<<<<< HEAD
                 System.out.println("✅ OK: " + resourcePath);
             }
 
@@ -126,6 +195,17 @@ public class ImportJson {
     }
 
     // Cuenta inserts (INSERT IGNORE devuelve 1 si insertó, 0 si ignoró)
+=======
+                System.out.println("OK: " + resourcePath);
+            }
+
+            System.out.println("Import finalizado.");
+            System.out.println("Consumos procesados: " + totalProcesados);
+            System.out.println("Consumos insertados (aprox): " + totalInsertConsumo);
+        }
+    }
+
+>>>>>>> cb16ab4 (Primer commit: backend + frontend integrado)
     private static int countInserted(int[] batchResult) {
         int c = 0;
         if (batchResult == null) return 0;
@@ -146,9 +226,16 @@ public class ImportJson {
         }
     }
 
+<<<<<<< HEAD
     // ===== DTOs JSON =====
     @JsonIgnoreProperties(ignoreUnknown = true)
     static class Root { public List<Municipio> municipios; }
+=======
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    static class Root {
+        public List<Municipio> municipios;
+    }
+>>>>>>> cb16ab4 (Primer commit: backend + frontend integrado)
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     static class Municipio {

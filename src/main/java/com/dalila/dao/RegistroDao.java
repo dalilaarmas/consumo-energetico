@@ -4,6 +4,7 @@ import com.dalila.db.Db;
 import com.dalila.dto.RegistroDTO;
 
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
@@ -42,7 +43,6 @@ public class RegistroDao {
                         rs.getString("fecha"),
                         rs.getDouble("consumo")
                 );
-
                 lista.add(dto);
             }
 
@@ -51,5 +51,62 @@ public class RegistroDao {
         }
 
         return lista;
+    }
+
+    public void insert(RegistroDTO dto) {
+        String sql = """
+                INSERT INTO consumo (cups_codigo, fecha, consumo)
+                VALUES (?, ?, ?)
+                """;
+
+        try (
+                Connection conn = Db.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)
+        ) {
+            ps.setString(1, dto.getCups());
+            ps.setDate(2, Date.valueOf(dto.getFecha()));
+            ps.setDouble(3, dto.getConsumo());
+            ps.executeUpdate();
+
+        } catch (Exception e) {
+            throw new RuntimeException("Error al insertar el registro", e);
+        }
+    }
+
+    public void update(int id, RegistroDTO dto) {
+        String sql = """
+                UPDATE consumo
+                SET cups_codigo = ?, fecha = ?, consumo = ?
+                WHERE id = ?
+                """;
+
+        try (
+                Connection conn = Db.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)
+        ) {
+            ps.setString(1, dto.getCups());
+            ps.setDate(2, Date.valueOf(dto.getFecha()));
+            ps.setDouble(3, dto.getConsumo());
+            ps.setInt(4, id);
+            ps.executeUpdate();
+
+        } catch (Exception e) {
+            throw new RuntimeException("Error al actualizar el registro", e);
+        }
+    }
+
+    public void delete(int id) {
+        String sql = "DELETE FROM consumo WHERE id = ?";
+
+        try (
+                Connection conn = Db.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)
+        ) {
+            ps.setInt(1, id);
+            ps.executeUpdate();
+
+        } catch (Exception e) {
+            throw new RuntimeException("Error al eliminar el registro", e);
+        }
     }
 }

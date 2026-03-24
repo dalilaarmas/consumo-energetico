@@ -975,18 +975,28 @@ function abrirModalEliminar(id, descripcion) {
 // Confirmar eliminación
 document.getElementById("btnConfirmarEliminar").addEventListener("click", async () => {
   if (!idRegistroAEliminar) return;
+
   try {
-    const respuesta = await fetch(`/registros/${idRegistroAEliminar}`, { method: "DELETE" });
-    if (!respuesta.ok) throw new Error("Error al eliminar registro");
+    const respuesta = await fetch(`${API_BASE}/registros/${idRegistroAEliminar}`, {
+      method: "DELETE"
+    });
+
+    if (!respuesta.ok) {
+      const texto = await respuesta.text();
+      throw new Error(texto || "Error al eliminar registro");
+    }
+
     await cargarYMostrarDatos();
-    const modalEliminar = bootstrap.Modal.getInstance(document.getElementById("modalConfirmarEliminar"));
+
+    const modalEliminar = bootstrap.Modal.getInstance(
+      document.getElementById("modalConfirmarEliminar")
+    );
     modalEliminar.hide();
     idRegistroAEliminar = null;
   } catch (error) {
     mostrarErrorBootstrap("No se pudo eliminar el registro", error.message);
   }
 });
-
 // Abrir modal nuevo registro al pulsar el botón
 document.getElementById("btnNuevoRegistro").addEventListener("click", () => {
   document.getElementById("formNuevo").reset();  // Limpia formulario
@@ -998,20 +1008,17 @@ document.getElementById("btnNuevoRegistro").addEventListener("click", () => {
 document.getElementById("formNuevo").addEventListener("submit", async (event) => {
   event.preventDefault();
 
-  const datos = {
-    municipio: document.getElementById("nuevo-municipio").value.trim().toUpperCase(),
-    cups_codigo: document.getElementById("nuevo-cups").value.trim(),
-    cups_direccion: document.getElementById("nuevo-direccion").value.trim(),
-    fecha: document.getElementById("nuevo-fecha").value,
-    consumo: parseFloat(document.getElementById("nuevo-consumo").value)
-  };
-
+ const datos = {
+   cups: document.getElementById("nuevo-cups").value.trim(),
+   fecha: document.getElementById("nuevo-fecha").value,
+   consumo: parseFloat(document.getElementById("nuevo-consumo").value)
+ };
   try {
-  const respuesta = await fetch("/registros", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(datos)
-  });
+ const respuesta = await fetch(`${API_BASE}/registros`, {
+   method: "POST",
+   headers: { "Content-Type": "application/json" },
+   body: JSON.stringify(datos)
+ });
 
   const textoRespuesta = await respuesta.text();
   console.log("Respuesta creación:", respuesta.status, textoRespuesta);
@@ -1048,24 +1055,25 @@ function abrirModalEdicion(id) {
 async function guardarCambios(event) {
   event.preventDefault();
 
-  const id = parseInt(document.getElementById("editar-id").value);
+  const id = parseInt(document.getElementById("editar-id").value, 10);
 
   const datos = {
-    municipio: document.getElementById("editar-municipio").value.trim().toUpperCase(),
-    cups_codigo: document.getElementById("editar-cups").value.trim(),         
-    cups_direccion: document.getElementById("editar-direccion").value.trim(), 
+    cups: document.getElementById("editar-cups").value.trim(),
     fecha: document.getElementById("editar-fecha").value,
     consumo: parseFloat(document.getElementById("editar-consumo").value)
   };
 
   try {
-    const respuesta = await fetch(`/registros/${id}`, {
+    const respuesta = await fetch(`${API_BASE}/registros/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(datos)
     });
 
-    if (!respuesta.ok) throw new Error("Error al actualizar");
+    if (!respuesta.ok) {
+      const texto = await respuesta.text();
+      throw new Error(texto || "Error al actualizar");
+    }
 
     await cargarYMostrarDatos();
     bootstrap.Modal.getInstance(document.getElementById("modalEditar")).hide();
@@ -1073,7 +1081,6 @@ async function guardarCambios(event) {
     mostrarErrorBootstrap("No se pudo guardar el registro", error.message);
   }
 }
-
 
 // Asignar listener submit del formulario
 document.getElementById("formEditar").addEventListener("submit", guardarCambios);

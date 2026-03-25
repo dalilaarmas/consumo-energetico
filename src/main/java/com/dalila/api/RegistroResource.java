@@ -42,4 +42,19 @@ public class RegistroResource {
         registroDao.delete(id);
         return Response.noContent().build();
     }
+
+    @GET
+    @Path("/pdf")
+    @Produces("application/pdf")
+    public Response descargarPdf() {
+        RegistroDao registroDao = new RegistroDao();
+        List<RegistroDTO> registros = registroDao.findAll();
+
+        com.dalila.service.PdfService pdfService = new com.dalila.service.PdfService();
+        byte[] pdf = pdfService.generarPdfRegistros(registros);
+
+        return Response.ok(pdf)
+                .header("Content-Disposition", "inline; filename=registros-consumo.pdf")
+                .build();
+    }
 }

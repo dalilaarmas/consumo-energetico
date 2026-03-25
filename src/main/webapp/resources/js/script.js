@@ -1280,50 +1280,8 @@ function extraerRango(datos, rangoTexto) {
 
 // Evento al pulsar en imprimir
 document.getElementById("btnEjecutarImpresion").addEventListener("click", async () => {
-  const ventana = window.open("", "_blank");
-  if (!ventana) {
-    alert("Error al abrir la ventana de impresión");
-    return;
-  }
-
-  const opciones = recogerOpcionesImpresion();
-  const datosFiltrados = filtrarDatosParaImpresion(opciones.filtrosGenerales);
-  if (!datosFiltrados.length) {
-    alert("No hay datos que cumplan los filtros.");
-    return;
-  }
-
-  const secciones = [];
-
-  if (opciones.imprimirResumenGlobal) {
-    const resumen = await prepararResumenGlobal(datosFiltrados, opciones.aniosTarjetas);
-    secciones.push(resumen);
-  }
-
-  if (opciones.imprimirTarjetasAnuales) {
-    const tarjetas = await prepararResumenesAnuales(datosFiltrados, opciones.aniosTarjetas, opciones.incluirDetallesTarjetas);
-    secciones.push(tarjetas);
-  }
-
-  if (opciones.imprimirGrafico) {
-    const datosGrafico = opciones.usarGraficoFiltrado ? datosFiltrados : todosLosDatos;
-    const graficoData = prepararGraficoImpresion(datosGrafico, opciones.rangoGrafico);
-    secciones.push({ tipo: "grafico", datos: graficoData });
-  }
-
-
-  if (opciones.imprimirTabla) {
-    const datosTabla = opciones.usarTablaFiltrada ? datosFiltrados : todosLosDatos;
-    const rangoTabla = extraerRango(datosTabla, opciones.rangoTabla);
-    const tabla = await prepararTablaFiltradaPorLotes(rangoTabla);
-    secciones.push(tabla);
-  }
-
-  imprimirSeccionesEnDocumento(secciones, ventana);
-});
-
-
-
+     window.open(`${API_BASE}/registros/pdf`, "_blank");
+  });
 
 
 function prepararResumenesAnuales(datos, aniosSeleccionados = "", mostrarDetalles = false) {

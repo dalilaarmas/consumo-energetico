@@ -10,14 +10,27 @@ import com.lowagie.text.Phrase;
 import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
-
+import com.lowagie.text.Image;
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.awt.*;
 import java.io.ByteArrayOutputStream;
 import java.util.List;
 
 public class PdfService {
 
-    public byte[] generarPdfRegistros(List<RegistroDTO> registros) {
+    public byte[] generarPdfRegistros(
+            List<RegistroDTO> registros,
+            boolean imprimirResumenGlobal,
+            boolean imprimirTarjetasAnuales,
+            boolean incluirDetallesTarjetas,
+            boolean imprimirGrafico,
+            boolean imprimirTabla,
+            String aniosTarjetas,
+            String rangoGrafico,
+            String rangoTabla
+    ) {
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
@@ -34,33 +47,54 @@ public class PdfService {
             titulo.setSpacingAfter(15);
             document.add(titulo);
 
-            Paragraph resumen = new Paragraph("Total de registros: " + registros.size(), textoFont);
-            resumen.setSpacingAfter(10);
-            document.add(resumen);
-
-            PdfPTable table = new PdfPTable(6);
-            table.setWidthPercentage(100);
-            table.setWidths(new float[]{1.2f, 2f, 2.5f, 3.5f, 2f, 1.5f});
-
-            addHeaderCell(table, "ID", cabeceraFont);
-            addHeaderCell(table, "Municipio", cabeceraFont);
-            addHeaderCell(table, "CUPS", cabeceraFont);
-            addHeaderCell(table, "Dirección", cabeceraFont);
-            addHeaderCell(table, "Fecha", cabeceraFont);
-            addHeaderCell(table, "Consumo", cabeceraFont);
-
-            for (RegistroDTO r : registros) {
-                table.addCell(new Phrase(String.valueOf(r.getId()), textoFont));
-                table.addCell(new Phrase(valor(r.getMunicipio()), textoFont));
-                table.addCell(new Phrase(valor(r.getCups()), textoFont));
-                table.addCell(new Phrase(valor(r.getDireccion()), textoFont));
-                table.addCell(new Phrase(valor(r.getFecha()), textoFont));
-                table.addCell(new Phrase(r.getConsumo() != null ? String.format("%.2f", r.getConsumo()) : "", textoFont));
+            if (imprimirResumenGlobal) {
+                Paragraph resumen = new Paragraph("Total de registros: " + registros.size(), textoFont);
+                resumen.setSpacingAfter(10);
+                document.add(resumen);
             }
 
-            document.add(table);
-            document.close();
+            if (imprimirGrafico) {
+                ChartService chartService = new ChartService();
+                BufferedImage chartImage = chartService.generarGraficaConsumo(registros);
 
+                ByteArrayOutputStream chartBaos = new ByteArrayOutputStream();
+                ImageIO.write(chartImage, "png", chartBaos);
+
+                Image pdfImage = Image.getInstance(chartBaos.toByteArray());
+                pdfImage.scaleToFit(760, 320);
+                pdfImage.setSpacingAfter(15);
+
+                document.add(pdfImage);
+            }
+
+            if (imprimirTabla) {
+                PdfPTable table = new PdfPTable(6);
+                table.setWidthPercentage(100);
+                table.setWidths(new float[]{1.2f, 2f, 2.5f, 3.5f, 2f, 1.5f});
+
+                addHeaderCell(table, "ID", cabeceraFont);
+                addHeaderCell(table, "Municipio", cabeceraFont);
+                addHeaderCell(table, "CUPS", cabeceraFont);
+                addHeaderCell(table, "Dirección", cabeceraFont);
+                addHeaderCell(table, "Fecha", cabeceraFont);
+                addHeaderCell(table, "Consumo", cabeceraFont);
+
+                for (RegistroDTO r : registros) {
+                    table.addCell(new Phrase(String.valueOf(r.getId()), textoFont));
+                    table.addCell(new Phrase(valor(r.getMunicipio()), textoFont));
+                    table.addCell(new Phrase(valor(r.getCups()), textoFont));
+                    table.addCell(new Phrase(valor(r.getDireccion()), textoFont));
+                    table.addCell(new Phrase(valor(r.getFecha()), textoFont));
+                    table.addCell(new Phrase(
+                            r.getConsumo() != null ? String.format("%.2f", r.getConsumo()) : "",
+                            textoFont
+                    ));
+                }
+
+                document.add(table);
+            }
+
+            document.close();
             return baos.toByteArray();
 
         } catch (Exception e) {

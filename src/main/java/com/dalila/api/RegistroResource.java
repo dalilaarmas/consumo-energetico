@@ -1,5 +1,6 @@
 package com.dalila.api;
 
+import com.dalila.service.PdfService;
 import com.dalila.dao.RegistroDao;
 import com.dalila.dto.RegistroDTO;
 import jakarta.ws.rs.*;
@@ -46,15 +47,42 @@ public class RegistroResource {
     @GET
     @Path("/pdf")
     @Produces("application/pdf")
-    public Response descargarPdf() {
-        RegistroDao registroDao = new RegistroDao();
-        List<RegistroDTO> registros = registroDao.findAll();
+    public Response descargarPdf(
+            @QueryParam("imprimirResumenGlobal") @DefaultValue("false") boolean imprimirResumenGlobal,
+            @QueryParam("imprimirTarjetasAnuales") @DefaultValue("false") boolean imprimirTarjetasAnuales,
+            @QueryParam("incluirDetallesTarjetas") @DefaultValue("false") boolean incluirDetallesTarjetas,
+            @QueryParam("imprimirGrafico") @DefaultValue("false") boolean imprimirGrafico,
+            @QueryParam("imprimirTabla") @DefaultValue("true") boolean imprimirTabla,
+            @QueryParam("municipio") String municipio,
+            @QueryParam("cups") String cups,
+            @QueryParam("direccion") String direccion,
+            @QueryParam("fechaMin") String fechaMin,
+            @QueryParam("fechaMax") String fechaMax,
+            @QueryParam("consumoMin") Double consumoMin,
+            @QueryParam("consumoMax") Double consumoMax,
+            @QueryParam("aniosTarjetas") String aniosTarjetas,
+            @QueryParam("rangoGrafico") String rangoGrafico,
+            @QueryParam("rangoTabla") String rangoTabla
+    ) {
+        List<RegistroDTO> registros = registroDao.findFiltered(
+                municipio, cups, direccion, fechaMin, fechaMax, consumoMin, consumoMax
+        );
 
-        com.dalila.service.PdfService pdfService = new com.dalila.service.PdfService();
-        byte[] pdf = pdfService.generarPdfRegistros(registros);
+        PdfService pdfService = new PdfService();
+        byte[] pdf = pdfService.generarPdfRegistros(
+                registros,
+                imprimirResumenGlobal,
+                imprimirTarjetasAnuales,
+                incluirDetallesTarjetas,
+                imprimirGrafico,
+                imprimirTabla,
+                aniosTarjetas,
+                rangoGrafico,
+                rangoTabla
+        );
 
         return Response.ok(pdf)
-                .header("Content-Disposition", "inline; filename=registros-consumo.pdf")
+                .header("Content-Disposition", "inline; filename=registros.pdf")
                 .build();
     }
 }

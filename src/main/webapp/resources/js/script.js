@@ -1279,10 +1279,35 @@ function extraerRango(datos, rangoTexto) {
 
 
 // Evento al pulsar en imprimir
-document.getElementById("btnEjecutarImpresion").addEventListener("click", async () => {
-     window.open(`${API_BASE}/registros/pdf`, "_blank");
-  });
+document.getElementById("btnEjecutarImpresion").addEventListener("click", () => {
+  const opciones = recogerOpcionesImpresion();
+  const params = new URLSearchParams();
 
+  params.append("imprimirResumenGlobal", opciones.imprimirResumenGlobal);
+  params.append("imprimirTarjetasAnuales", opciones.imprimirTarjetasAnuales);
+  params.append("incluirDetallesTarjetas", opciones.incluirDetallesTarjetas);
+  params.append("imprimirGrafico", opciones.imprimirGrafico);
+  params.append("imprimirTabla", opciones.imprimirTabla);
+
+  params.append("aniosTarjetas", opciones.aniosTarjetas || "");
+  params.append("rangoGrafico", opciones.rangoGrafico || "");
+  params.append("rangoTabla", opciones.rangoTabla || "");
+
+  params.append("cups", opciones.filtrosGenerales.cups || "");
+  params.append("direccion", opciones.filtrosGenerales.direccion || "");
+  params.append("municipio", opciones.filtrosGenerales.municipio || "");
+  params.append("fechaMin", opciones.filtrosGenerales.fechaMin || "");
+  params.append("fechaMax", opciones.filtrosGenerales.fechaMax || "");
+
+  if (!isNaN(opciones.filtrosGenerales.consumoMin)) {
+    params.append("consumoMin", opciones.filtrosGenerales.consumoMin);
+  }
+  if (!isNaN(opciones.filtrosGenerales.consumoMax)) {
+    params.append("consumoMax", opciones.filtrosGenerales.consumoMax);
+  }
+
+  window.open(`${API_BASE}/registros/pdf?${params.toString()}`, "_blank");
+});
 
 function prepararResumenesAnuales(datos, aniosSeleccionados = "", mostrarDetalles = false) {
   const contenedor = document.createElement("div");

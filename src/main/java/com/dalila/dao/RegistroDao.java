@@ -109,4 +109,135 @@ public class RegistroDao {
             throw new RuntimeException("Error al eliminar el registro", e);
         }
     }
+
+    public List<RegistroDTO> findFiltered(String municipio, String cups, String direccion,
+                                          String fechaDesde, String fechaHasta,
+                                          Double consumoMin, Double consumoMax) {
+        List<RegistroDTO> lista = new ArrayList<>();
+
+        StringBuilder sql = new StringBuilder("""
+        SELECT
+            c.id,
+            m.nombre AS municipio,
+            cu.codigo AS cups,
+            cu.direccion AS direccion,
+            c.fecha,
+            c.consumo
+        FROM consumo c
+        JOIN cups cu ON c.cups_codigo = cu.codigo
+        JOIN municipio m ON cu.municipio_id = m.id
+        WHERE 1=1
+        """);
+
+        List<Object> params = new ArrayList<>();
+
+        if (municipio != null && !municipio.isBlank()) {
+            sql.append(" AND LOWER(m.nombre) LIKE ? ");
+            params.add("%" + municipio.toLowerCase() + "%");
+        }
+
+        if (cups != null && !cups.isBlank()) {
+            sql.append(" AND LOWER(cu.codigo) LIKE ? ");
+            params.add("%" + cups.toLowerCase() + "%");
+        }
+
+        if (direccion != null && !direccion.isBlank()) {
+            sql.append(" AND LOWER(cu.direccion) LIKE ? ");
+            params.add("%" + direccion.toLowerCase() + "%");
+        }
+
+        Date fechaDesdeSql = parseFechaMin(fechaDesde);
+        Date fechaHastaSql = parseFechaMax(fechaHasta);
+
+        if (fechaDesdeSql != null) {
+            sql.append(" AND c.fecha >= ? ");
+            params.add(fechaDesdeSql);
+        }
+
+        if (fechaHastaSql != null) {
+            sql.append(" AND c.fecha <= ? ");
+            params.add(fechaHastaSql);
+        }
+
+        if (consumoMin != null) {
+            sql.append(" AND c.consumo >= ? ");
+            params.add(consumoMin);
+        }
+
+        if (consumoMax != null) {
+            sql.append(" AND c.consumo <= ? ");
+            params.add(consumoMax);
+        }
+
+        sql.append(" ORDER BY c.fecha DESC ");
+
+        try (
+                Connection conn = Db.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql.toString())
+        ) {
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    RegistroDTO dto = new RegistroDTO(
+                            rs.getInt("id"),
+                            rs.getString("municipio"),
+                            rs.getString("cups"),
+                            rs.getString("direccion"),
+                            rs.getString("fecha"),
+                            rs.getDouble("consumo")
+                    );
+                    lista.add(dto);
+                }
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException("Error al obtener los registros filtrados", e);
+        }
+
+        return lista;
+    }
+
+    private Date parseFechaMin(String valor) {
+        if (valor == null || valor.isBlank()) return null;
+
+        valor = valor.trim();
+
+        if (valor.matches("^\\d{4}$")) {
+            return Date.valueOf(valor + "-01-01");
+        }
+
+        if (valor.matches("^\\d{4}-\\d{2}$")) {
+            return Date.valueOf(valor + "-01");
+        }
+
+        if (valor.matches("^\\d{4}-\\d{2}-\\d{2}$")) {
+            return Date.valueOf(valor);
+        }
+
+        throw new IllegalArgumentException("Formato de fecha mínima no válido: " + valor);
+    }
+
+    private Date parseFechaMax(String valor) {
+        if (valor == null || valor.isBlank()) return null;
+
+        valor = valor.trim();
+
+        if (valor.matches("^\\d{4}$")) {
+            return Date.valueOf(valor + "-12-31");
+        }
+
+        if (valor.matches("^\\d{4}-\\d{2}$")) {
+            java.time.YearMonth ym = java.time.YearMonth.parse(valor);
+            return Date.valueOf(ym.atEndOfMonth());
+        }
+
+        if (valor.matches("^\\d{4}-\\d{2}-\\d{2}$")) {
+            return Date.valueOf(valor);
+        }
+
+        throw new IllegalArgumentException("Formato de fecha máxima no válido: " + valor);
+    }
 }

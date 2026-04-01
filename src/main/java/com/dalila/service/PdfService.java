@@ -17,8 +17,11 @@ import java.io.ByteArrayOutputStream;
 import java.awt.*;
 import java.io.ByteArrayOutputStream;
 import java.util.List;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class PdfService {
+    private static final Logger logger = LogManager.getLogger(PdfService.class);
 
     public byte[] generarPdfRegistros(
             List<RegistroDTO> registros,
@@ -31,6 +34,9 @@ public class PdfService {
             String rangoGrafico,
             String rangoTabla
     ) {
+        logger.info("Mensaje de información");
+        logger.debug(String.format("El valor de la variable imprimirResultadoGlobal es: %b", imprimirResumenGlobal));
+        logger.error("Mensaje de información");
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
 

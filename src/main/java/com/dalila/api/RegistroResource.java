@@ -1,9 +1,20 @@
 package com.dalila.api;
 
-import com.dalila.service.PdfService;
 import com.dalila.dao.RegistroDao;
 import com.dalila.dto.RegistroDTO;
-import jakarta.ws.rs.*;
+import com.dalila.service.PdfService;
+
+import jakarta.ws.rs.DefaultValue;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.Produces;
+
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
@@ -16,8 +27,24 @@ public class RegistroResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public List<RegistroDTO> getAll() {
-        return registroDao.findAll();
+    public List<RegistroDTO> getAll(
+            @QueryParam("municipio") String municipio,
+            @QueryParam("cups") String cups,
+            @QueryParam("direccion") String direccion,
+            @QueryParam("fechaDesde") String fechaDesde,
+            @QueryParam("fechaHasta") String fechaHasta,
+            @QueryParam("consumoMin") Double consumoMin,
+            @QueryParam("consumoMax") Double consumoMax
+    ) {
+        return registroDao.findFiltered(
+                municipio,
+                cups,
+                direccion,
+                fechaDesde,
+                fechaHasta,
+                consumoMin,
+                consumoMax
+        );
     }
 
     @POST
@@ -56,8 +83,8 @@ public class RegistroResource {
             @QueryParam("municipio") String municipio,
             @QueryParam("cups") String cups,
             @QueryParam("direccion") String direccion,
-            @QueryParam("fechaMin") String fechaMin,
-            @QueryParam("fechaMax") String fechaMax,
+            @QueryParam("fechaDesde") String fechaDesde,
+            @QueryParam("fechaHasta") String fechaHasta,
             @QueryParam("consumoMin") Double consumoMin,
             @QueryParam("consumoMax") Double consumoMax,
             @QueryParam("aniosTarjetas") String aniosTarjetas,
@@ -65,7 +92,7 @@ public class RegistroResource {
             @QueryParam("rangoTabla") String rangoTabla
     ) {
         List<RegistroDTO> registros = registroDao.findFiltered(
-                municipio, cups, direccion, fechaMin, fechaMax, consumoMin, consumoMax
+                municipio, cups, direccion, fechaDesde, fechaHasta, consumoMin, consumoMax
         );
 
         PdfService pdfService = new PdfService();

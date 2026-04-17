@@ -1306,7 +1306,7 @@ document.getElementById("btnEjecutarImpresion").addEventListener("click", () => 
     params.append("consumoMax", opciones.filtrosGenerales.consumoMax);
   }
 
-  window.open(`${API_BASE}/registros/pdf?${params.toString()}`, "_blank");
+  window.open(`http://localhost:8080/consumo-energetico/generar-pdf?${params.toString()}`, "_blank");
 });
 
 function prepararResumenesAnuales(datos, aniosSeleccionados = "", mostrarDetalles = false) {

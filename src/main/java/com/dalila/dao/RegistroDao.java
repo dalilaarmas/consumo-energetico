@@ -53,6 +53,8 @@ public class RegistroDao {
         return lista;
     }
 
+    // --- MÉTODOS CRUD RESTAURADOS ---
+
     public void insert(RegistroDTO dto) {
         String sql = """
                 INSERT INTO consumo (cups_codigo, fecha, consumo)
@@ -110,6 +112,8 @@ public class RegistroDao {
         }
     }
 
+    // --- MÉTODOS DEL BUSCADOR Y PDF ---
+
     public List<RegistroDTO> findFiltered(String municipio, String cups, String direccion,
                                           String fechaDesde, String fechaHasta,
                                           Double consumoMin, Double consumoMax) {
@@ -131,17 +135,17 @@ public class RegistroDao {
 
         List<Object> params = new ArrayList<>();
 
-        if (municipio != null && !municipio.isBlank()) {
+        if (municipio != null && !municipio.trim().isEmpty()) {
             sql.append(" AND LOWER(m.nombre) LIKE ? ");
             params.add("%" + municipio.toLowerCase() + "%");
         }
 
-        if (cups != null && !cups.isBlank()) {
+        if (cups != null && !cups.trim().isEmpty()) {
             sql.append(" AND LOWER(cu.codigo) LIKE ? ");
             params.add("%" + cups.toLowerCase() + "%");
         }
 
-        if (direccion != null && !direccion.isBlank()) {
+        if (direccion != null && !direccion.trim().isEmpty()) {
             sql.append(" AND LOWER(cu.direccion) LIKE ? ");
             params.add("%" + direccion.toLowerCase() + "%");
         }
@@ -194,14 +198,14 @@ public class RegistroDao {
             }
 
         } catch (Exception e) {
-            throw new RuntimeException("Error al obtener los registros filtrados", e);
+            e.printStackTrace();
         }
 
         return lista;
     }
 
     private Date parseFechaMin(String valor) {
-        if (valor == null || valor.isBlank()) return null;
+        if (valor == null || valor.trim().isEmpty()) return null;
 
         valor = valor.trim();
 
@@ -217,11 +221,11 @@ public class RegistroDao {
             return Date.valueOf(valor);
         }
 
-        throw new IllegalArgumentException("Formato de fecha mínima no válido: " + valor);
+        return null;
     }
 
     private Date parseFechaMax(String valor) {
-        if (valor == null || valor.isBlank()) return null;
+        if (valor == null || valor.trim().isEmpty()) return null;
 
         valor = valor.trim();
 
@@ -230,14 +234,22 @@ public class RegistroDao {
         }
 
         if (valor.matches("^\\d{4}-\\d{2}$")) {
-            java.time.YearMonth ym = java.time.YearMonth.parse(valor);
-            return Date.valueOf(ym.atEndOfMonth());
+            int anio = Integer.parseInt(valor.substring(0, 4));
+            int mes = Integer.parseInt(valor.substring(5, 7));
+            int dia = 31;
+            if (mes == 4 || mes == 6 || mes == 9 || mes == 11) {
+                dia = 30;
+            } else if (mes == 2) {
+                boolean bisiesto = (anio % 4 == 0 && (anio % 100 != 0 || anio % 400 == 0));
+                dia = bisiesto ? 29 : 28;
+            }
+            return Date.valueOf(valor + "-" + dia);
         }
 
         if (valor.matches("^\\d{4}-\\d{2}-\\d{2}$")) {
             return Date.valueOf(valor);
         }
 
-        throw new IllegalArgumentException("Formato de fecha máxima no válido: " + valor);
+        return null;
     }
 }

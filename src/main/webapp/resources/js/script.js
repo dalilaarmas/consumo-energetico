@@ -1653,7 +1653,36 @@ function intentarMostrarContenido() {
   }
 }
 
+async function actualizarPanelResumen() {
+    const response = await fetch(`${API_BASE}/registros/resumen`);
+    const data = await response.json();
 
+    // Ejemplo: Poner el valor del día con más consumo
+    // Suponiendo que en tu HTML tienes un id="valorMaximo"
+    document.getElementById("valorMaximo").textContent = data.diaMayorConsumo.consumo + " kWh";
+    document.getElementById("fechaMaximo").textContent = data.diaMayorConsumo.fecha;
+}
 
+async function cargarResumenDesdeServidor() {
+    try {
+        // Llamada al endpoint de resumen global
+        const resGlobal = await fetch(`${API_BASE}/registros/resumen`);
+        const data = await resGlobal.json();
 
+        // Actualizar el DOM con los datos reales del Back
+        // Ejemplo para el día de mayor consumo:
+        const badgeMayor = document.querySelector(".badge.bg-danger");
+        if (data.diaMayorConsumo) {
+            badgeMayor.textContent = `${data.diaMayorConsumo.fecha} (${data.diaMayorConsumo.consumo.toFixed(2)} kWh)`;
+        }
+
+        // Llamada al resumen anual para las tarjetas azules
+        const resAnual = await fetch(`${API_BASE}/registros/resumen/anual`);
+        const tarjetas = await resAnual.json();
+        renderizarTarjetasAnuales(tarjetas);
+
+    } catch (error) {
+        console.error("Error al cargar resúmenes:", error);
+    }
+}
 

@@ -1,7 +1,10 @@
 package com.dalila.api;
 
 import com.dalila.dao.RegistroDao;
+import com.dalila.dto.ConsumoAnualDto;
 import com.dalila.dto.RegistroDTO;
+import com.dalila.dto.ResumenGlobalDto;
+import com.dalila.service.EstadisticasService;
 import com.dalila.service.PdfService;
 
 import jakarta.ws.rs.DefaultValue;
@@ -19,6 +22,8 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Path("/registros")
 public class RegistroResource {
@@ -45,6 +50,21 @@ public class RegistroResource {
                 consumoMin,
                 consumoMax
         );
+    }
+
+    @GET
+    @Path("/{id}")
+    @Produces({"application/json"})
+    public Response getById(@PathParam("id") int id) {
+        // Asumiendo que tu DAO tiene un método findById o get
+        RegistroDTO registro = this.registroDao.findById(id);
+
+        if (registro == null) {
+            // Si no existe, lo correcto en REST es devolver un 404 Not Found
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+
+        return Response.ok(registro).build(); // 200 OK
     }
 
     @POST
@@ -111,5 +131,37 @@ public class RegistroResource {
         return Response.ok(pdf)
                 .header("Content-Disposition", "inline; filename=registros.pdf")
                 .build();
+    }
+
+    // Endpoint 1: Resumen General
+    // Ruta final: GET /registros/resumen
+    @GET
+    @Path("/resumen")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getResumenGlobal() {
+        // Obtenemos todos los datos reales del DAO (sin filtros para el resumen total)
+        List<RegistroDTO> todos = registroDao.findAll();
+
+        EstadisticasService service = new EstadisticasService();
+        ResumenGlobalDto resumen = service.calcularResumenGlobal(todos);
+
+        return Response.ok(resumen).build();
+    }
+
+    // Endpoint 2: Resumen por Años
+    // Ruta final: GET /registros/resumen/anual
+    @GET
+    @Path("/resumen/anual")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getResumenAnual() {
+        // 1. Pedir datos brutos
+        List<RegistroDTO> todos = registroDao.findAll();
+
+        // 2. Pedir al SERVICIO que haga las estadísticas
+        EstadisticasService service = new EstadisticasService();
+        List<ConsumoAnualDto> listaAnual = service.calcularResumenAnual(todos);
+
+        // 3. Enviar respuesta
+        return Response.ok(listaAnual).build();
     }
 }

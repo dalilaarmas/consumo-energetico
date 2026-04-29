@@ -1,6 +1,7 @@
 package com.dalila.dao;
 
 import com.dalila.db.Db;
+import com.dalila.dto.ConsumoAnualDto;
 import com.dalila.dto.RegistroDTO;
 
 import java.sql.Connection;
@@ -224,6 +225,49 @@ public class RegistroDao {
         return null;
     }
 
+    public RegistroDTO findById(int id) {
+        RegistroDTO registro = null;
+
+        String sql = """
+                SELECT
+                    c.id,
+                    m.nombre AS municipio,
+                    cu.codigo AS cups,
+                    cu.direccion AS direccion,
+                    c.fecha,
+                    c.consumo
+                FROM consumo c
+                JOIN cups cu ON c.cups_codigo = cu.codigo
+                JOIN municipio m ON cu.municipio_id = m.id
+                WHERE c.id = ?
+                """;
+
+        try (
+                Connection conn = Db.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)
+        ) {
+            ps.setInt(1, id); // Sustituimos la interrogación por el ID
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) { // Si encuentra un resultado, creamos el objeto
+                    registro = new RegistroDTO(
+                            rs.getInt("id"),
+                            rs.getString("municipio"),
+                            rs.getString("cups"),
+                            rs.getString("direccion"),
+                            rs.getString("fecha"),
+                            rs.getDouble("consumo")
+                    );
+                }
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException("Error al obtener el registro por ID", e);
+        }
+
+        return registro; // Devolverá el registro, o null si no encontró ese ID
+    }
+
     private Date parseFechaMax(String valor) {
         if (valor == null || valor.trim().isEmpty()) return null;
 
@@ -252,4 +296,56 @@ public class RegistroDao {
 
         return null;
     }
+
+    // metodo para el Resumen General
+    public Double obtenerConsumoTotalGlobal() {
+        // Le decimos a SQL que sume toda la columna consumo
+        String sql = "SELECT SUM(consumo) AS total FROM consumo";
+
+        try (
+                Connection conn = Db.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()
+        ) {
+            if (rs.next()) {
+                return rs.getDouble("total");
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Error al calcular el total global", e);
+        }
+        return 0.0;
+    }
+
+    // metodo para el Resumen por Años
+    public List<ConsumoAnualDto> obtenerResumenAnual() {
+        List<ConsumoAnualDto> lista = new ArrayList<>();
+
+        // Magia SQL: Extraemos el año de la fecha, sumamos el consumo,
+        // y agrupamos los resultados por ese año.
+        String sql = """
+                SELECT YEAR(fecha) as anio, SUM(consumo) as total 
+                FROM consumo 
+                GROUP BY YEAR(fecha) 
+                ORDER BY YEAR(fecha) DESC
+                """;
+
+        try (
+                Connection conn = Db.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()
+        ) {
+            while (rs.next()) {
+                // Por cada año que encuentre, creamos nuestro DTO y lo guardamos
+                lista.add(new ConsumoAnualDto(
+                        rs.getInt("anio"),
+                        rs.getDouble("total")
+                ));
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Error al calcular el resumen anual", e);
+        }
+        return lista;
+    }
+
+
 }

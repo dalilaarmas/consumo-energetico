@@ -1,8 +1,6 @@
 package com.dalila.service;
 
-import com.dalila.dto.ConsumoAnualDto;
-import com.dalila.dto.RegistroDTO;
-import com.dalila.dto.ResumenGlobalDto;
+import com.dalila.dto.*;
 import com.dalila.dto.ResumenGlobalDto;
 
 import java.util.*;
@@ -82,5 +80,56 @@ public class EstadisticasService {
                 })
                 .sorted((a, b) -> Integer.compare(b.getAnio(), a.getAnio()))
                 .collect(Collectors.toList());
+    }
+
+    public DetalleEstadisticoAnualDTO obtenerAnalisisCompleto(int anio, List<RegistroDTO> todos) {
+        // 1. Filtrar registros del año
+        List<RegistroDTO> delAnio = todos.stream()
+                .filter(r -> r.getFecha().startsWith(String.valueOf(anio)))
+                .toList();
+
+        if (delAnio.isEmpty()) return null;
+
+        // 2. Calcular Top 3 Absoluto del Año
+        List<RegistroDTO> topAnualMayor = delAnio.stream()
+                .sorted((a, b) -> b.getConsumo().compareTo(a.getConsumo())).limit(3).toList();
+        List<RegistroDTO> topAnualMenor = delAnio.stream()
+                .filter(r -> r.getConsumo() > 0)
+                .sorted((a, b) -> a.getConsumo().compareTo(b.getConsumo())).limit(3).toList();
+
+        // 3. Agrupar y procesar por mes
+        Map<String, List<RegistroDTO>> agrupadoMes = delAnio.stream()
+                .collect(Collectors.groupingBy(r -> r.getFecha().substring(5, 7)));
+
+        Map<String, DetalleEstadisticoAnualDTO.EstadisticasMensuales> desglose = new java.util.LinkedHashMap<>();
+
+        agrupadoMes.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach(entry -> {
+            String nombreMes = obtenerNombreMes(entry.getKey());
+            List<RegistroDTO> regsMes = entry.getValue();
+
+            double totalM = regsMes.stream().mapToDouble(RegistroDTO::getConsumo).sum();
+            List<RegistroDTO> mayorM = regsMes.stream()
+                    .sorted((a,b) -> b.getConsumo().compareTo(a.getConsumo())).limit(3).toList();
+            List<RegistroDTO> menorM = regsMes.stream()
+                    .sorted((a,b) -> a.getConsumo().compareTo(b.getConsumo())).limit(3).toList();
+
+            desglose.put(nombreMes, new DetalleEstadisticoAnualDTO.EstadisticasMensuales(totalM, mayorM, menorM));
+        });
+
+        // 4. Construir respuesta
+        DetalleEstadisticoAnualDTO dto = new DetalleEstadisticoAnualDTO();
+        dto.setAnio(anio);
+        dto.setConsumoTotalAnual(delAnio.stream().mapToDouble(RegistroDTO::getConsumo).sum());
+        dto.setPromedioMensualAnual(dto.getConsumoTotalAnual() / desglose.size());
+        dto.setTop3AnualMayor(topAnualMayor);
+        dto.setTop3AnualMenor(topAnualMenor);
+        dto.setDetallePorMes(desglose);
+
+        return dto;
+    }
+    private String obtenerNombreMes(String numeroMes) {
+        String[] meses = {"Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+                "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"};
+        return meses[Integer.parseInt(numeroMes) - 1];
     }
 }

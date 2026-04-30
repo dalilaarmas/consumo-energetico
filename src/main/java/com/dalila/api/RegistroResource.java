@@ -2,6 +2,7 @@ package com.dalila.api;
 
 import com.dalila.dao.RegistroDao;
 import com.dalila.dto.ConsumoAnualDto;
+import com.dalila.dto.DetalleEstadisticoAnualDTO;
 import com.dalila.dto.RegistroDTO;
 import com.dalila.dto.ResumenGlobalDto;
 import com.dalila.service.EstadisticasService;
@@ -163,5 +164,28 @@ public class RegistroResource {
 
         // 3. Enviar respuesta
         return Response.ok(listaAnual).build();
+    }
+
+    // ENDPOINT 1: Muestra todos los registros del año (La tabla)
+    @GET
+    @Path("/anio/{anio}/registros")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getSoloRegistros(@PathParam("anio") int anio) {
+        List<RegistroDTO> todos = registroDao.findAll();
+        List<RegistroDTO> filtrados = todos.stream()
+                .filter(r -> r.getFecha().startsWith(String.valueOf(anio)))
+                .collect(Collectors.toList());
+        return Response.ok(filtrados).build();
+    }
+
+    // ENDPOINT 2: Muestra las estadísticas (Total, promedio, mes alto, Top 3)
+    @GET
+    @Path("/anio/{anio}/analisis-completo")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getAnalisisCompleto(@PathParam("anio") int anio) {
+        List<RegistroDTO> todos = registroDao.findAll();
+        EstadisticasService service = new EstadisticasService();
+        DetalleEstadisticoAnualDTO master = service.obtenerAnalisisCompleto(anio, todos);
+        return Response.ok(master).build();
     }
 }

@@ -162,30 +162,7 @@ configurarBotonToggle("btn-toggle-grafico", "contenedor-canvas", "Mostrar gráfi
 configurarBotonToggle("btn-toggle-resumen", "columna-resumen", "Mostrar resumen", "Ocultar resumen");
 configurarBotonToggle("btn-toggle-tarjetas", "modulos-anuales-wrapper", "Mostrar tarjetas por año", "Ocultar tarjetas por año");
 
-// Aplicar filtros al escribir
-const filtros = [
-  "filtro-municipio",
-  "filtro-cups",
-  "filtro-direccion",
-  "filtro-fecha-desde",
-  "filtro-fecha-hasta",
-  "filtro-consumo-min",
-  "filtro-consumo-max"
-];
-
-
-filtros.forEach(id => {
-  const el = document.getElementById(id);
-  if (el) {
-    el.addEventListener("input", () => {
-      try {
-        aplicarFiltros();
-      } catch (e) {
-        // Evitamos errores mientras se escribe
-      }
-    });
-  }
-});
+// Los listeners de filtros se registran dentro del .then() de cargarYMostrarDatos, una vez el DOM está listo
 
 cargarYMostrarDatos().then(() => {
   datosFiltrados = [...todosLosDatos]; // Inicializa con todos los datos
@@ -480,7 +457,7 @@ async function cargarYMostrarDatos() {
             data-bs-title='Haz click en el icono derecho para filtrar por CUPS. Debes introducir al menos 3 caracteres. Toca de nuevo el icono para ocultar la caja de texto.<br><button class="btn btn-sm btn-link cerrar-tooltip">Cerrar</button>'>
           </i>
           CUPS
-          <i id="iconoFiltroCups" class="bi bi-plug-fill"></i>
+          <i id="iconoFiltroCups" class="bi bi-plug-fill" data-bs-toggle="collapse" data-bs-target="#filtroCupsCollapse" role="button" aria-expanded="false" aria-controls="filtroCupsCollapse"></i>
           <div class="collapse mt-1" id="filtroCupsCollapse">
             <input type="text" class="form-control form-control-sm mt-1" id="filtro-cups" placeholder="Filtrar CUPS">
           </div>
@@ -493,7 +470,7 @@ async function cargarYMostrarDatos() {
             data-bs-title='Haz click en el icono derecho para filtrar por dirección. Debes introducir al menos 3 caracteres. Toca de nuevo el icono para ocultar la caja de texto. <br><button class="btn btn-sm btn-link cerrar-tooltip">Cerrar</button>'>
           </i>
           Dirección
-          <i id="iconoFiltroDireccion" class="bi bi-map-fill" data-bs-toggle="collapse" ></i>
+          <i id="iconoFiltroDireccion" class="bi bi-map-fill" data-bs-toggle="collapse" data-bs-target="#filtroDireccionCollapse" role="button" aria-expanded="false" aria-controls="filtroDireccionCollapse"></i>
 
           <div class="collapse mt-1" id="filtroDireccionCollapse">
             <input type="text" class="form-control form-control-sm mt-1" id="filtro-direccion" placeholder="Filtrar dirección">
@@ -942,25 +919,29 @@ function mostrarPagina() {
 
   tbody.innerHTML = html;
 
-  // Añadir listener a todos los botones editar
-  document.querySelectorAll(".btn-editar").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const id = btn.getAttribute("data-id");
-      abrirModalEdicion(id);
-    });
-  });
-
-  // Listener botón eliminar en tabla
-document.querySelectorAll(".btn-eliminar").forEach(btn => {
-  btn.addEventListener("click", () => {
-    const id = btn.getAttribute("data-id");
-    const descripcion = btn.closest("tr").querySelector("td").textContent; // Ejemplo: primer td (municipio)
-    abrirModalEliminar(id, descripcion);
-  });
-});
-
   renderPaginacion(datosFiltrados.length);
 }
+
+// =====================================================
+// DELEGACIÓN DE EVENTOS para botones Editar/Eliminar
+// Se registra UNA sola vez en el tbody y funciona
+// aunque la tabla se repinte con cada filtro/página
+// =====================================================
+document.querySelector("#tabla-consumo tbody").addEventListener("click", (e) => {
+  const btnEditar   = e.target.closest(".btn-editar");
+  const btnEliminar = e.target.closest(".btn-eliminar");
+
+  if (btnEditar) {
+    const id = btnEditar.getAttribute("data-id");
+    abrirModalEdicion(id);
+  }
+
+  if (btnEliminar) {
+    const id = btnEliminar.getAttribute("data-id");
+    const descripcion = btnEliminar.closest("tr").querySelector("td").textContent;
+    abrirModalEliminar(id, descripcion);
+  }
+});
 
 let idRegistroAEliminar = null;
 
@@ -1050,13 +1031,20 @@ function abrirModalEdicion(id) {
 
   document.getElementById("editar-id").value = registro.id;
   document.getElementById("editar-municipio").value = registro.municipio || "";
-  document.getElementById("editar-cups").value = registro.cups_codigo|| "";
+  document.getElementById("editar-cups").value = registro.cups_codigo || "";
   document.getElementById("editar-direccion").value = registro.cups_direccion || "";
   document.getElementById("editar-fecha").value = registro.fecha || "";
   document.getElementById("editar-consumo").value = registro.consumo ?? "";
 
-  const modal = new bootstrap.Modal(document.getElementById("modalEditar"));
-  modal.show();
+  const modalEl = document.getElementById("modalEditar");
+  const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+
+  // setTimeout garantiza que el blur ocurre DESPUÉS del evento click,
+  // evitando el conflicto aria-hidden de Bootstrap
+  setTimeout(() => {
+    if (document.activeElement) document.activeElement.blur();
+    modal.show();
+  }, 0);
 }
 
 
@@ -1068,7 +1056,9 @@ async function guardarCambios(event) {
   const id = parseInt(document.getElementById("editar-id").value, 10);
 
   const datos = {
+    municipio: document.getElementById("editar-municipio").value.trim(),
     cups: document.getElementById("editar-cups").value.trim(),
+    direccion: document.getElementById("editar-direccion").value.trim(),
     fecha: document.getElementById("editar-fecha").value,
     consumo: parseFloat(document.getElementById("editar-consumo").value)
   };

@@ -126,7 +126,28 @@ public class PdfService {
                 tablaTarjetas.setSpacingBefore(10);
                 tablaTarjetas.setSpacingAfter(20);
 
-                for (String anio : consumoPorAnio.keySet().stream().sorted().collect(Collectors.toList())) {
+                // Parsear los años seleccionados (ej: "2023,2026" o "2022-2024")
+                java.util.Set<Integer> aniosFiltro = new java.util.HashSet<>();
+                if (aniosTarjetas != null && !aniosTarjetas.isBlank()) {
+                    for (String parte : aniosTarjetas.split(",")) {
+                        parte = parte.trim();
+                        if (parte.matches("\\d{4}-\\d{4}")) {
+                            int desde = Integer.parseInt(parte.substring(0, 4));
+                            int hasta = Integer.parseInt(parte.substring(5, 9));
+                            for (int a = desde; a <= hasta; a++) aniosFiltro.add(a);
+                        } else if (parte.matches("\\d{4}")) {
+                            aniosFiltro.add(Integer.parseInt(parte));
+                        }
+                    }
+                }
+                final java.util.Set<Integer> aniosFiltroFinal = aniosFiltro;
+
+                java.util.List<String> aniosAMostrar = consumoPorAnio.keySet().stream()
+                        .filter(a -> aniosFiltroFinal.isEmpty() || aniosFiltroFinal.contains(Integer.parseInt(a)))
+                        .sorted()
+                        .collect(Collectors.toList());
+
+                for (String anio : aniosAMostrar) {
                     double totalAnio = consumoPorAnio.get(anio);
 
                     Map<String, Double> mesesDeEsteAnio = consumoPorMes.entrySet().stream()
@@ -171,7 +192,7 @@ public class PdfService {
                     tablaTarjetas.addCell(celdaTarjeta);
                 }
 
-                if (consumoPorAnio.size() % 2 != 0) {
+                if (aniosAMostrar.size() % 2 != 0) {
                     PdfPCell celdaVacia = new PdfPCell();
                     celdaVacia.setBorder(com.lowagie.text.Rectangle.NO_BORDER);
                     tablaTarjetas.addCell(celdaVacia);
@@ -201,7 +222,7 @@ public class PdfService {
             }
 
             // ==========================================
-            // 4. SECCIÓN: TABLA DE DATOS (Arreglo Definitivo)
+            // 4. SECCIÓN: TABLA DE DATOS
             // ==========================================
             if (imprimirTabla) {
                 document.add(new Paragraph("Desglose de Registros", new Font(Font.HELVETICA, 14, Font.BOLD, new Color(13, 110, 253))));

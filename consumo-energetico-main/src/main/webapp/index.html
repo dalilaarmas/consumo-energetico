@@ -117,108 +117,144 @@
       </div>
 
       <div class="modal-body">
-        <form id="form-imprimir">
+        <form id="form-imprimir" autocomplete="off">
 
+          <!-- Secciones a imprimir -->
           <fieldset class="border p-3 mb-3">
-            <legend class="w-auto px-2">¿Qué secciones deseas imprimir?</legend>
+            <legend class="w-auto px-2 fs-6 fw-bold">1. ¿Qué quieres incluir en el PDF?</legend>
+            <p class="text-muted small mb-2">Marca las secciones que aparecerán en el documento impreso.</p>
 
-            <div class="form-check">
+            <!-- Resumen global -->
+            <div class="form-check mb-2">
               <input class="form-check-input" type="checkbox" id="chkResumenGlobal" checked>
-              <label class="form-check-label" for="chkResumenGlobal"><strong>Resumen global</strong></label>
+              <label class="form-check-label" for="chkResumenGlobal">
+                <strong>Resumen global</strong>
+                <span class="text-muted fw-normal"> — totales y estadísticas generales</span>
+              </label>
             </div>
 
-            <div class="form-check">
+            <!-- Resumen por años -->
+            <div class="form-check mb-2">
               <input class="form-check-input" type="checkbox" id="chkTarjetasAnuales" checked>
-              <label class="form-check-label" for="chkTarjetasAnuales"><strong>Resumen por años</strong></label>
+              <label class="form-check-label" for="chkTarjetasAnuales">
+                <strong>Resumen por años</strong>
+                <span class="text-muted fw-normal"> — una tarjeta por cada año con su consumo total</span>
+              </label>
               <div class="ms-3 mt-2">
-                <label for="inputAniosTarjetas" class="form-label">Años (ej: 2022,2024 o 2022-2024):</label>
-                <input type="text" id="inputAniosTarjetas" class="form-control form-control-sm"
-                       placeholder="Todos los años">
+                <label for="inputAniosTarjetas" class="form-label small">
+                  Limitar a ciertos años <span class="text-muted">(opcional, ej: 2022,2024 o 2022-2024)</span>
+                </label>
+                <input type="text" id="inputAniosTarjetas" autocomplete="off" class="form-control form-control-sm"
+                       placeholder="Dejar vacío para incluir todos los años">
                 <div class="form-check mt-2">
                   <input class="form-check-input" type="checkbox" id="chkMostrarDetallesTarjetas">
-                  <label class="form-check-label" for="chkMostrarDetallesTarjetas">Incluir detalles por mes</label>
+                  <label class="form-check-label small" for="chkMostrarDetallesTarjetas">
+                    Incluir desglose mensual dentro de cada año
+                  </label>
                 </div>
               </div>
             </div>
 
-            <div class="form-check">
+            <!-- Gráfica -->
+            <div class="form-check mb-2">
               <input class="form-check-input" type="checkbox" id="chkGrafico" checked>
-              <label class="form-check-label" for="chkGrafico"><strong>Gráfica de consumo</strong></label>
+              <label class="form-check-label" for="chkGrafico">
+                <strong>Gráfica de consumo</strong>
+              </label>
               <div class="ms-3 mt-2">
+                <p class="small text-muted mb-1">¿Qué registros usar para la gráfica?</p>
                 <div class="form-check">
                   <input class="form-check-input" type="radio" name="modoGrafico" id="graficoFiltrado" checked>
-                  <label class="form-check-label" for="graficoFiltrado">Usar registros filtrados</label>
+                  <label class="form-check-label small" for="graficoFiltrado">
+                    Los registros filtrados actualmente en la página
+                  </label>
                 </div>
                 <div class="form-check">
                   <input class="form-check-input" type="radio" name="modoGrafico" id="graficoGlobal">
-                  <label class="form-check-label" for="graficoGlobal">Todos los registros</label>
+                  <label class="form-check-label small" for="graficoGlobal">
+                    Todos los registros (sin filtrar)
+                  </label>
                 </div>
-                <label for="inputRangoGrafico" class="form-label mt-2">Rango de registros (ej: 1-500):</label>
-                <input type="text" id="inputRangoGrafico" class="form-control form-control-sm"
-                       placeholder="Todos los registros">
+                <label for="inputRangoGrafico" class="form-label small mt-2">
+                  Mostrar solo un rango <span class="text-muted">(opcional, ej: 1-500)</span>
+                </label>
+                <input type="text" id="inputRangoGrafico" autocomplete="off" class="form-control form-control-sm"
+                       placeholder="Dejar vacío para incluir todos">
               </div>
             </div>
 
-            <div class="form-check">
+            <!-- Tabla -->
+            <div class="form-check mb-2">
               <input class="form-check-input" type="checkbox" id="chkTabla" checked>
               <label class="form-check-label" for="chkTabla">
-                <strong>Tabla de registros.</strong>
+                <strong>Tabla de registros</strong>
               </label>
               <div class="ms-3 mt-2">
+                <p class="small text-muted mb-1">¿Qué registros usar para la tabla?</p>
                 <div class="form-check">
                   <input class="form-check-input" type="radio" name="modoTabla" id="tablaFiltrada" checked>
-                  <label class="form-check-label" for="tablaFiltrada">Usar registros filtrados</label>
+                  <label class="form-check-label small" for="tablaFiltrada">
+                    Los registros filtrados actualmente en la página
+                  </label>
                 </div>
                 <div class="form-check">
                   <input class="form-check-input" type="radio" name="modoTabla" id="tablaGlobal">
-                  <label class="form-check-label" for="tablaGlobal">Todos los registros</label>
+                  <label class="form-check-label small" for="tablaGlobal">
+                    Todos los registros (sin filtrar)
+                  </label>
                 </div>
+                <label for="inputRangoTabla" class="form-label small mt-2">
+                  Mostrar solo un rango <span class="text-muted">(opcional, ej: 1-500)</span>
+                </label>
+                <input type="text" id="inputRangoTabla" autocomplete="off" class="form-control form-control-sm"
+                       placeholder="Dejar vacío para incluir todos">
               </div>
-              <label for="inputRangoTabla" class="form-label mt-2">Rango de registros (ej: 1-500):</label>
-              <input type="text" id="inputRangoTabla" class="form-control form-control-sm" placeholder="Todos los registros">
             </div>
           </fieldset>
 
+          <!-- Filtros -->
           <fieldset class="border p-3 mb-3">
-            <legend class="w-auto px-2">Filtros generales (se aplican si seleccionas registros filtrados)</legend>
+            <legend class="w-auto px-2 fs-6 fw-bold">2. Filtros aplicados a los registros filtrados</legend>
+            <div class="alert alert-info py-2 px-3 small mb-3">
+              <i class="bi bi-info-circle me-1"></i>
+              Estos filtros se han copiado automáticamente desde la página. Puedes modificarlos si quieres que el PDF use unos distintos.
+            </div>
             <div class="row g-2">
               <div class="col-md-4">
-                <label for="filtroCUPS" class="form-label"><strong>CUPS </strong><i
-                        class="bi bi-plug-fill text-info"></i></label>
-                <input type="text" class="form-control" id="filtroCUPS" placeholder="Opcional">
+                <label for="filtroCUPS" class="form-label small fw-bold">CUPS</label>
+                <input type="text" class="form-control form-control-sm" id="filtroCUPS" placeholder="Cualquiera">
               </div>
               <div class="col-md-4">
-                <label for="filtroDireccion" class="form-label"><strong>Dirección </strong><i
-                        class="bi bi-pin-map-fill text-info"></i></label>
-                <input type="text" class="form-control" id="filtroDireccion" placeholder="Opcional">
+                <label for="filtroDireccion" class="form-label small fw-bold">Dirección</label>
+                <input type="text" class="form-control form-control-sm" id="filtroDireccion" placeholder="Cualquiera">
               </div>
               <div class="col-md-4">
-                <label for="filtroMunicipio" class="form-label"><strong>Municipio </strong><i
-                        class="bi bi-map-fill text-info"></i></label>
-                <input type="text" class="form-control" id="filtroMunicipio" placeholder="Opcional">
+                <label for="filtroMunicipio" class="form-label small fw-bold">Municipio</label>
+                <input type="text" class="form-control form-control-sm" id="filtroMunicipio" placeholder="Cualquiera">
               </div>
               <div class="col-md-3">
-                <label for="filtroConsumoMin" class="form-label"><strong>Consumo mínimo </strong><i
-                        class="bi bi-battery text-danger"></i></label>
-                <input type="number" class="form-control" id="filtroConsumoMin" placeholder="Opcional">
+                <label for="filtroConsumoMin" class="form-label small fw-bold">Consumo mínimo (kWh)</label>
+                <input type="number" class="form-control form-control-sm" id="filtroConsumoMin" placeholder="Sin límite">
               </div>
               <div class="col-md-3">
-                <label for="filtroConsumoMax" class="form-label"><strong>Consumo máximo </strong><i
-                        class="bi bi-battery-full text-success"></i></label>
-                <input type="number" class="form-control" id="filtroConsumoMax" placeholder="Opcional">
+                <label for="filtroConsumoMax" class="form-label small fw-bold">Consumo máximo (kWh)</label>
+                <input type="number" class="form-control form-control-sm" id="filtroConsumoMax" placeholder="Sin límite">
               </div>
               <div class="col-md-3">
-                <label for="filtroFechaMin" class="form-label"><strong>Fecha mínima </strong><i
-                        class="bi bi-calendar-minus-fill text-danger"></i></label>
-                <input type="text" class="form-control" id="filtroFechaMin"
-                       placeholder="aaaa o aaaa-mm o aaaa-mm-dd">
+                <label for="filtroFechaMin" class="form-label small fw-bold">Fecha desde</label>
+                <input type="text" class="form-control form-control-sm" id="filtroFechaMin"
+                       placeholder="aaaa, aaaa-mm o aaaa-mm-dd">
               </div>
               <div class="col-md-3">
-                <label for="filtroFechaMax" class="form-label"><strong>Fecha máxima </strong><i
-                        class="bi bi-calendar-plus-fill text-success"></i></label>
-                <input type="text" class="form-control" id="filtroFechaMax"
-                       placeholder="aaaa o aaaa-mm o aaaa-mm-dd">
+                <label for="filtroFechaMax" class="form-label small fw-bold">Fecha hasta</label>
+                <input type="text" class="form-control form-control-sm" id="filtroFechaMax"
+                       placeholder="aaaa, aaaa-mm o aaaa-mm-dd">
               </div>
+            </div>
+            <div class="mt-2">
+              <button type="button" class="btn btn-outline-secondary btn-sm" id="btnLimpiarFiltrosImpresion">
+                <i class="bi bi-x-circle me-1"></i>Limpiar filtros
+              </button>
             </div>
           </fieldset>
 

@@ -51,7 +51,7 @@ function mostrarErrorBootstrap(mensaje, detalle = "") {
 
 }
 
-/* Capturar y mostrar errores no controlados de forma global  (window.onerror) y de promesas (unhandledrejection) en la interfaz de una aplicación web, 
+/* Capturar y mostrar errores no controlados de forma global  (window.onerror) y de promesas (unhandledrejection) en la interfaz de una aplicación web,
 usando un sistema visual basado en Bootstrap. Muestras el error en la interfaz y por consola. */
 window.onerror = function (message, source, lineno, colno, error) {
   let detalle = `${message} en ${source}:${lineno}:${colno}`;
@@ -105,8 +105,8 @@ const colGrafico = document.getElementById('columna-grafico');
 const colResumen = document.getElementById('columna-resumen');
 
 
-/*La función ajustarColumnas() modifica las clases CSS de dos columnas (una para el gráfico y otra para el resumen) según cuáles estén visibles. 
-Esto sirve para ajustar automáticamente el diseño de la interfaz y que se aproveche bien el espacio disponible dependiendo de si se muestra una o 
+/*La función ajustarColumnas() modifica las clases CSS de dos columnas (una para el gráfico y otra para el resumen) según cuáles estén visibles.
+Esto sirve para ajustar automáticamente el diseño de la interfaz y que se aproveche bien el espacio disponible dependiendo de si se muestra una o
 ambas secciones. */
 
 function ajustarColumnas() {
@@ -123,7 +123,7 @@ function ajustarColumnas() {
   }
 }
 
-/*La función configurarBotonToggle(...) sirve para asociar a un botón la funcionalidad de mostrar/ocultar una 
+/*La función configurarBotonToggle(...) sirve para asociar a un botón la funcionalidad de mostrar/ocultar una
 sección con animación y cambiar el aspecto del botón.*/
 
 function configurarBotonToggle(idBoton, idSeccion, textoMostrar, textoOcultar) {
@@ -237,7 +237,7 @@ actualizarEstadoIconosFiltro();
 });
 
 
-/*La función actualizarResumenRegistros() se encarga de mostrar u ocultar un resumen visual de cuántos registros se están viendo 
+/*La función actualizarResumenRegistros() se encarga de mostrar u ocultar un resumen visual de cuántos registros se están viendo
 actualmente respecto al total, y actualizar ese mensaje dinámicamente según los filtros aplicados. */
 
 function actualizarResumenRegistros() {
@@ -252,7 +252,7 @@ function actualizarResumenRegistros() {
 }
 
 /*Limpia y reconstruye desde cero el resumen global y las tarjetas anuales. Da contexto visual completo: máximos, mínimos, promedios y top de días.
-Organiza los datos por año y permite expandir detalles de cada mes. Usa clases de Bootstrap (card, collapse, badge, etc.) para una presentación 
+Organiza los datos por año y permite expandir detalles de cada mes. Usa clases de Bootstrap (card, collapse, badge, etc.) para una presentación
 visual clara y responsive.*/
 
 function generarResumenConsumo() {
@@ -481,7 +481,7 @@ async function cargarYMostrarDatos() {
           </i>
           CUPS
           <i id="iconoFiltroCups" class="bi bi-plug-fill"></i>
-          <div class="collapse mt-1" id="filtroCupsCollapse"> 
+          <div class="collapse mt-1" id="filtroCupsCollapse">
             <input type="text" class="form-control form-control-sm mt-1" id="filtro-cups" placeholder="Filtrar CUPS">
           </div>
         </th>
@@ -494,7 +494,7 @@ async function cargarYMostrarDatos() {
           </i>
           Dirección
           <i id="iconoFiltroDireccion" class="bi bi-map-fill" data-bs-toggle="collapse" ></i>
-         
+
           <div class="collapse mt-1" id="filtroDireccionCollapse">
             <input type="text" class="form-control form-control-sm mt-1" id="filtro-direccion" placeholder="Filtrar dirección">
           </div>
@@ -504,7 +504,7 @@ async function cargarYMostrarDatos() {
             title="Haz click en el icono derecho para filtrar por fecha. Para filtrar con una sola fecha, introdúcela en el campo 'Desde'. Puedes usar formatos como 2023, 2023-05 o 2023-05-15. Toca de nuevo el icono para ocultar la caja de texto."></i>
           Fecha
           <i id="iconoFiltroFecha" class="bi bi-calendar-date-fill" data-bs-toggle="collapse" data-bs-target="#filtroFechaCollapse" role="button"></i>
-          
+
           <div class="collapse mt-1" id="filtroFechaCollapse">
             <input type="search" class="form-control form-control-sm mt-1" id="filtro-fecha-desde" placeholder="Desde (YYYY-MM-DD)">
             <input type="search" class="form-control form-control-sm mt-1" id="filtro-fecha-hasta" placeholder="Hasta (YYYY-MM-DD)">
@@ -520,7 +520,7 @@ async function cargarYMostrarDatos() {
           </i>
           Consumo (kWh)
           <i id="iconoFiltroConsumo" class="bi bi-lightning-charge-fill" data-bs-toggle="collapse" data-bs-target="#filtroConsumoCollapse"></i>
-          
+
 
 
           <div class="collapse mt-1" id="filtroConsumoCollapse">
@@ -617,7 +617,7 @@ try {
       err.stack || JSON.stringify(err, null, 2)
     );
   }
-  
+
   datosFiltrados = [...todosLosDatos];// copia del array plano
 
 
@@ -785,8 +785,8 @@ if (btnCerrarError) {
 
 
 
-//Borra cualquier texto o contenido que esté mostrando un error, 
-// oculta los detalles del error si están visibles y actualiza el botón 
+//Borra cualquier texto o contenido que esté mostrando un error,
+// oculta los detalles del error si están visibles y actualiza el botón
 // para que diga "Ver detalles".
 function limpiarErroresBootstrap() {
   const mensajeError = document.getElementById("mensajeError");
@@ -804,7 +804,7 @@ function limpiarErroresBootstrap() {
   }
 }
 
-// La función actualizarGrafico(consumosFiltrados) genera o actualiza una gráfica de líneas con Chart.js 
+// La función actualizarGrafico(consumosFiltrados) genera o actualiza una gráfica de líneas con Chart.js
 // para mostrar la evolución del consumo energético
 function actualizarGrafico(consumosFiltrados) {
 
@@ -1050,8 +1050,8 @@ function abrirModalEdicion(id) {
 
   document.getElementById("editar-id").value = registro.id;
   document.getElementById("editar-municipio").value = registro.municipio || "";
-  document.getElementById("editar-cups").value = registro.cups_codigo|| "";       
-  document.getElementById("editar-direccion").value = registro.cups_direccion || ""; 
+  document.getElementById("editar-cups").value = registro.cups_codigo|| "";
+  document.getElementById("editar-direccion").value = registro.cups_direccion || "";
   document.getElementById("editar-fecha").value = registro.fecha || "";
   document.getElementById("editar-consumo").value = registro.consumo ?? "";
 
@@ -1111,10 +1111,10 @@ function esFechaParcialValida(fecha) {
 /** Renderiza la paginación en la interfaz según el número total de registros.
  * Actualiza los botones de página y añade lógica para saltar directamente a una página específica.*/
 function renderPaginacion(totalRegistros) {
-  
+
   // Calcula el número total de páginas según los registros por página
   const totalPaginas = Math.ceil(totalRegistros / REGISTROS_POR_PAGINA);
-  
+
    // Selecciona el contenedor de paginación y lo limpia
   const paginacion = document.getElementById("paginacion");
   paginacion.innerHTML = "";
@@ -1179,7 +1179,7 @@ function renderPaginacion(totalRegistros) {
 
   // Botón » para ir a la página siguiente
   añadirBoton("»", paginaActual + 1, false, paginaActual === totalPaginas);
-  
+
    // Configura el botón "ir a página" para salto directo
   const inputIrPagina = document.getElementById("ir-a-pagina");
   const btnIrPagina = document.getElementById("btn-ir-a-pagina");
@@ -1291,6 +1291,36 @@ function extraerRango(datos, rangoTexto) {
   });
 }
 
+
+// Al abrir el modal de impresión, copiar los filtros activos de la página principal
+document.getElementById("modalImpresion").addEventListener("show.bs.modal", () => {
+  // Limpiar campos que NO se copian de la página (el navegador los puede recordar)
+  ["inputAniosTarjetas", "inputRangoGrafico", "inputRangoTabla"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = "";
+  });
+
+  // Copiar filtros activos de la página principal al modal
+  const copiar = (idOrigen, idDestino) => {
+    const origen = document.getElementById(idOrigen);
+    const destino = document.getElementById(idDestino);
+    if (origen && destino) destino.value = origen.value;
+  };
+  copiar("filtro-cups",        "filtroCUPS");
+  copiar("filtro-direccion",   "filtroDireccion");
+  copiar("filtro-municipio",   "filtroMunicipio");
+  copiar("filtro-consumo-min", "filtroConsumoMin");
+  copiar("filtro-consumo-max", "filtroConsumoMax");
+  copiar("filtro-fecha-desde", "filtroFechaMin");
+  copiar("filtro-fecha-hasta", "filtroFechaMax");
+});
+
+// Botón limpiar filtros del modal
+document.getElementById("btnLimpiarFiltrosImpresion").addEventListener("click", () => {
+  ["filtroCUPS","filtroDireccion","filtroMunicipio",
+   "filtroConsumoMin","filtroConsumoMax","filtroFechaMin","filtroFechaMax"]
+    .forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; });
+});
 
 // Evento al pulsar en imprimir
 document.getElementById("btnEjecutarImpresion").addEventListener("click", () => {
@@ -1699,4 +1729,3 @@ async function cargarResumenDesdeServidor() {
         console.error("Error al cargar resúmenes:", error);
     }
 }
-

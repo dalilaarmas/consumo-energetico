@@ -82,9 +82,11 @@ public class RegistroService {
      * Crea un nuevo registro de consumo.
      * Lanza IllegalArgumentException si faltan campos obligatorios.
      */
-    public void crear(RegistroDTO dto) {
+    public RegistroDTO crear(RegistroDTO dto) {
         validarRegistro(dto);
-        registroDao.insert(dto);
+        int id = registroDao.insert(dto);
+        dto.setId(id);
+        return dto;
     }
 
     /**

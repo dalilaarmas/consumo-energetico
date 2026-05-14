@@ -78,8 +78,8 @@ public class RegistroResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response crear(RegistroDTO dto) {
         try {
-            registroService.crear(dto);
-            return Response.status(201).entity(dto).build();
+            RegistroDTO creado = registroService.crear(dto);
+            return Response.status(201).entity(creado).build();
         } catch (IllegalArgumentException e) {
             return error(400, e.getMessage());
         } catch (Exception e) {

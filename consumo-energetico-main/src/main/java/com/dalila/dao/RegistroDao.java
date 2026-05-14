@@ -8,6 +8,7 @@ import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -56,7 +57,7 @@ public class RegistroDao {
 
     // --- MÉTODOS CRUD RESTAURADOS ---
 
-    public void insert(RegistroDTO dto) {
+    public int insert(RegistroDTO dto) {
         String sql = """
                 INSERT INTO consumo (cups_codigo, fecha, consumo)
                 VALUES (?, ?, ?)
@@ -64,12 +65,22 @@ public class RegistroDao {
 
         try (
                 Connection conn = Db.getConnection();
-                PreparedStatement ps = conn.prepareStatement(sql)
+                PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)
         ) {
             ps.setString(1, dto.getCups());
             ps.setDate(2, Date.valueOf(dto.getFecha()));
             ps.setDouble(3, dto.getConsumo());
             ps.executeUpdate();
+
+            // Recuperar el ID generado por la BD
+            try (ResultSet keys = ps.getGeneratedKeys()) {
+                if (keys.next()) {
+                    int id = keys.getInt(1);
+                    dto.setId(id);
+                    return id;
+                }
+            }
+            return 0;
 
         } catch (Exception e) {
             throw new RuntimeException("Error al insertar el registro", e);

@@ -179,11 +179,21 @@ cargarYMostrarDatos().then(() => {
   }
 
 
-  ["filtro-municipio", "filtro-cups", "filtro-direccion", "filtro-fecha-desde", "filtro-fecha-hasta", "filtro-consumo-min", "filtro-consumo-max"]
+  ["filtro-municipio", "filtro-cups", "filtro-direccion", "filtro-consumo-min", "filtro-consumo-max"]
     .forEach(id => {
       const el = document.getElementById(id);
       if (el) el.addEventListener("input", aplicarFiltros);
     });
+
+  // Los filtros de fecha usan input + change + keyup para máxima compatibilidad
+  ["filtro-fecha-desde", "filtro-fecha-hasta"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener("input",  aplicarFiltros);
+      el.addEventListener("change", aplicarFiltros);
+      el.addEventListener("keyup",  aplicarFiltros);
+    }
+  });
 
 
     //cambiar colores filtro según si están activos o no
@@ -483,8 +493,8 @@ async function cargarYMostrarDatos() {
           <i id="iconoFiltroFecha" class="bi bi-calendar-date-fill" data-bs-toggle="collapse" data-bs-target="#filtroFechaCollapse" role="button"></i>
 
           <div class="collapse mt-1" id="filtroFechaCollapse">
-            <input type="search" class="form-control form-control-sm mt-1" id="filtro-fecha-desde" placeholder="Desde (YYYY-MM-DD)">
-            <input type="search" class="form-control form-control-sm mt-1" id="filtro-fecha-hasta" placeholder="Hasta (YYYY-MM-DD)">
+            <input type="text" class="form-control form-control-sm mt-1" id="filtro-fecha-desde" placeholder="Desde (ej: 2023 o 2023-05)">
+            <input type="text" class="form-control form-control-sm mt-1" id="filtro-fecha-hasta" placeholder="Hasta (ej: 2024 o 2024-12)">
           </div>
         </th>
 
@@ -924,10 +934,10 @@ function mostrarPagina() {
 
 // =====================================================
 // DELEGACIÓN DE EVENTOS para botones Editar/Eliminar
-// Se registra en datos-container (siempre existe en el DOM)
-// así funciona aunque la tabla se repinte con cada filtro/página
+// Se registra UNA sola vez en el tbody y funciona
+// aunque la tabla se repinte con cada filtro/página
 // =====================================================
-document.getElementById("datos-container").addEventListener("click", (e) => {
+document.querySelector("#tabla-consumo tbody").addEventListener("click", (e) => {
   const btnEditar   = e.target.closest(".btn-editar");
   const btnEliminar = e.target.closest(".btn-eliminar");
 
@@ -1136,10 +1146,7 @@ function esFechaParcialValida(fecha) {
   return /^\d{4}(-\d{2}){0,2}$/.test(fecha);
 }
 
-// Expande una fecha parcial al mínimo posible para comparar como "desde"
-// "2023"    → "2023-01-01"
-// "2023-05" → "2023-05-01"
-// "2023-05-15" → "2023-05-15"
+// Expande fecha parcial al mínimo: "2023" → "2023-01-01", "2023-05" → "2023-05-01"
 function expandirFechaMin(fecha) {
   if (!fecha) return "";
   if (/^\d{4}$/.test(fecha))       return fecha + "-01-01";
@@ -1147,10 +1154,7 @@ function expandirFechaMin(fecha) {
   return fecha;
 }
 
-// Expande una fecha parcial al máximo posible para comparar como "hasta"
-// "2023"    → "2023-12-31"
-// "2023-05" → "2023-05-31"
-// "2023-05-15" → "2023-05-15"
+// Expande fecha parcial al máximo: "2023" → "2023-12-31", "2023-05" → "2023-05-31"
 function expandirFechaMax(fecha) {
   if (!fecha) return "";
   if (/^\d{4}$/.test(fecha))       return fecha + "-12-31";

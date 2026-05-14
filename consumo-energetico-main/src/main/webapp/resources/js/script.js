@@ -1,5 +1,22 @@
 const API_BASE = "http://localhost:8080/consumo-energetico/api";
 
+// ── Helpers de fecha parcial ──────────────────────────────────────────────────
+// "2023" → "2023-01-01" | "2023-05" → "2023-05-01" | "2023-05-15" → sin cambio
+function expandirFechaMin(fecha) {
+  if (!fecha) return "";
+  if (/^\d{4}$/.test(fecha))       return fecha + "-01-01";
+  if (/^\d{4}-\d{2}$/.test(fecha)) return fecha + "-01";
+  return fecha;
+}
+
+// "2023" → "2023-12-31" | "2023-05" → "2023-05-31" | "2023-05-15" → sin cambio
+function expandirFechaMax(fecha) {
+  if (!fecha) return "";
+  if (/^\d{4}$/.test(fecha))       return fecha + "-12-31";
+  if (/^\d{4}-\d{2}$/.test(fecha)) return fecha + "-31";
+  return fecha;
+}
+
 // Variables de control de paginación y filtros
 let paginaActual = 1;
 const REGISTROS_POR_PAGINA = 20;
@@ -179,20 +196,17 @@ cargarYMostrarDatos().then(() => {
   }
 
 
-  ["filtro-municipio", "filtro-cups", "filtro-direccion", "filtro-consumo-min", "filtro-consumo-max"]
-    .forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.addEventListener("input", aplicarFiltros);
+  // Listener delegado en document: funciona aunque la tabla se repinte
+  // No necesita re-registrarse tras cada cargarYMostrarDatos()
+  const FILTRO_IDS = new Set([
+    "filtro-municipio", "filtro-cups", "filtro-direccion",
+    "filtro-fecha-desde", "filtro-fecha-hasta",
+    "filtro-consumo-min", "filtro-consumo-max"
+  ]);
+  ["input", "change", "keyup"].forEach(ev => {
+    document.addEventListener(ev, (e) => {
+      if (FILTRO_IDS.has(e.target.id)) aplicarFiltros();
     });
-
-  // Los filtros de fecha usan input + change + keyup para máxima compatibilidad
-  ["filtro-fecha-desde", "filtro-fecha-hasta"].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.addEventListener("input",  aplicarFiltros);
-      el.addEventListener("change", aplicarFiltros);
-      el.addEventListener("keyup",  aplicarFiltros);
-    }
   });
 
 
@@ -539,7 +553,7 @@ async function cargarYMostrarDatos() {
       }
     });
   }
-  document.getElementById("filtro-consumo-min")?.addEventListener("input", aplicarFiltros);
+  // listener de consumo-min gestionado por delegación global arriba
 
   // Activar tooltips con botón de cerrar funcional y soporte móvil
   const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
@@ -937,7 +951,7 @@ function mostrarPagina() {
 // Se registra UNA sola vez en el tbody y funciona
 // aunque la tabla se repinte con cada filtro/página
 // =====================================================
-document.querySelector("#tabla-consumo tbody").addEventListener("click", (e) => {
+document.getElementById("datos-container").addEventListener("click", (e) => {
   const btnEditar   = e.target.closest(".btn-editar");
   const btnEliminar = e.target.closest(".btn-eliminar");
 
@@ -978,6 +992,7 @@ document.getElementById("btnConfirmarEliminar").addEventListener("click", async 
     }
 
     await cargarYMostrarDatos();
+    aplicarFiltros();
 
     const modalEliminar = bootstrap.Modal.getInstance(
       document.getElementById("modalConfirmarEliminar")
@@ -1065,6 +1080,7 @@ document.getElementById("formNuevo").addEventListener("submit", async (event) =>
     }
 
     await cargarYMostrarDatos();
+    aplicarFiltros();
     bootstrap.Modal.getInstance(document.getElementById("modalNuevo")).hide();
 
   } catch (error) {
@@ -1124,6 +1140,7 @@ async function guardarCambios(event) {
     }
 
     await cargarYMostrarDatos();
+    aplicarFiltros();
     bootstrap.Modal.getInstance(document.getElementById("modalEditar")).hide();
   } catch (error) {
     mostrarErrorBootstrap("No se pudo guardar el registro", error.message);
@@ -1144,22 +1161,6 @@ document.getElementById("formEditar").addEventListener("submit", guardarCambios)
 
 function esFechaParcialValida(fecha) {
   return /^\d{4}(-\d{2}){0,2}$/.test(fecha);
-}
-
-// Expande fecha parcial al mínimo: "2023" → "2023-01-01", "2023-05" → "2023-05-01"
-function expandirFechaMin(fecha) {
-  if (!fecha) return "";
-  if (/^\d{4}$/.test(fecha))       return fecha + "-01-01";
-  if (/^\d{4}-\d{2}$/.test(fecha)) return fecha + "-01";
-  return fecha;
-}
-
-// Expande fecha parcial al máximo: "2023" → "2023-12-31", "2023-05" → "2023-05-31"
-function expandirFechaMax(fecha) {
-  if (!fecha) return "";
-  if (/^\d{4}$/.test(fecha))       return fecha + "-12-31";
-  if (/^\d{4}-\d{2}$/.test(fecha)) return fecha + "-31";
-  return fecha;
 }
 
 /** Renderiza la paginación en la interfaz según el número total de registros.

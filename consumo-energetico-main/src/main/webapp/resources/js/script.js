@@ -1303,10 +1303,8 @@ function recogerOpcionesImpresion() {
     incluirDetallesTarjetas: getChecked('chkMostrarDetallesTarjetas'),
     imprimirGrafico: getChecked('chkGrafico'),
     usarGraficoFiltrado: getChecked('graficoFiltrado'),
-    rangoGrafico: getVal('inputRangoGrafico'),
     imprimirTabla: getChecked('chkTabla'),
     usarTablaFiltrada: getChecked('tablaFiltrada'),
-    rangoTabla: getVal('inputRangoTabla'),
     filtrosGenerales: {
       cups: (getVal('filtroCUPS') || "").toLowerCase(),
         direccion: (getVal('filtroDireccion') || "").toLowerCase(),
@@ -1350,7 +1348,7 @@ function extraerRango(datos, rangoTexto) {
 // Al abrir el modal de impresión, copiar los filtros activos de la página principal
 document.getElementById("modalImpresion").addEventListener("show.bs.modal", () => {
   // Limpiar campos que NO se copian de la página (el navegador los puede recordar)
-  ["inputAniosTarjetas", "inputRangoGrafico", "inputRangoTabla"].forEach(id => {
+  ["inputAniosTarjetas"].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = "";
   });
@@ -1389,8 +1387,6 @@ document.getElementById("btnEjecutarImpresion").addEventListener("click", () => 
   params.append("imprimirTabla", opciones.imprimirTabla);
 
   params.append("aniosTarjetas", opciones.aniosTarjetas || "");
-  params.append("rangoGrafico", opciones.rangoGrafico || "");
-  params.append("rangoTabla", opciones.rangoTabla || "");
 
   params.append("cups", opciones.filtrosGenerales.cups || "");
   params.append("direccion", opciones.filtrosGenerales.direccion || "");

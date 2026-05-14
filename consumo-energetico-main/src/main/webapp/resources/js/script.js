@@ -645,8 +645,8 @@ function aplicarFiltros() {
       ? filtraTexto(dato.cups_direccion, direccionSeleccionada)
       : true;
 
-    const matchFechaDesde = !fechaDesde || !esFechaParcialValida(fechaDesde) || dato.fecha >= fechaDesde;
-    const matchFechaHasta = !fechaHasta || !esFechaParcialValida(fechaHasta) || dato.fecha <= fechaHasta;
+    const matchFechaDesde = !fechaDesde || !esFechaParcialValida(fechaDesde) || dato.fecha >= expandirFechaMin(fechaDesde);
+    const matchFechaHasta = !fechaHasta || !esFechaParcialValida(fechaHasta) || dato.fecha <= expandirFechaMax(fechaHasta);
 
     const matchConsumoMin = consumoMin !== null ? dato.consumo != null && dato.consumo >= consumoMin : true;
     const matchConsumoMax = consumoMax !== null ? dato.consumo != null && dato.consumo <= consumoMax : true;
@@ -924,10 +924,10 @@ function mostrarPagina() {
 
 // =====================================================
 // DELEGACIÓN DE EVENTOS para botones Editar/Eliminar
-// Se registra UNA sola vez en el tbody y funciona
-// aunque la tabla se repinte con cada filtro/página
+// Se registra en datos-container (siempre existe en el DOM)
+// así funciona aunque la tabla se repinte con cada filtro/página
 // =====================================================
-document.querySelector("#tabla-consumo tbody").addEventListener("click", (e) => {
+document.getElementById("datos-container").addEventListener("click", (e) => {
   const btnEditar   = e.target.closest(".btn-editar");
   const btnEliminar = e.target.closest(".btn-eliminar");
 
@@ -979,24 +979,67 @@ document.getElementById("btnConfirmarEliminar").addEventListener("click", async 
   }
 });
 // Abrir modal nuevo registro al pulsar el botón
+// ── Modal Nuevo Registro ─────────────────────────────────────────────────
+
 document.getElementById("btnNuevoRegistro").addEventListener("click", () => {
-  document.getElementById("formNuevo").reset();  // Limpia formulario
+  document.getElementById("formNuevo").reset();
+  // Ocultar secciones que aparecen tras buscar el CUPS
+  document.getElementById("nuevo-info-cups").style.setProperty("display", "none", "important");
+  document.getElementById("nuevo-campos-extra").style.setProperty("display", "none", "important");
+  document.getElementById("nuevo-hr").style.display = "none";
+  document.getElementById("nuevo-cups-estado").textContent = "";
   const modalNuevo = new bootstrap.Modal(document.getElementById("modalNuevo"));
   modalNuevo.show();
 });
 
-// Enviar datos para crear registro nuevo
+// Búsqueda de CUPS al pulsar "Buscar" → usa GET /api/cups/{codigo}
+document.getElementById("btnBuscarCups").addEventListener("click", async () => {
+  const codigo  = document.getElementById("nuevo-cups").value.trim().toUpperCase();
+  const estado  = document.getElementById("nuevo-cups-estado");
+
+  if (!codigo) {
+    estado.className = "form-text text-danger";
+    estado.textContent = "Introduce un código CUPS.";
+    return;
+  }
+
+  estado.className = "form-text text-muted";
+  estado.textContent = "Buscando...";
+
+  try {
+    const res = await fetch(`${API_BASE}/cups/${encodeURIComponent(codigo)}`);
+    if (!res.ok) throw new Error("CUPS no encontrado");
+    const cups = await res.json();
+
+    // Mostrar info de solo lectura
+    document.getElementById("nuevo-municipio-texto").textContent = cups.municipio || "—";
+    document.getElementById("nuevo-direccion-texto").textContent = cups.direccion  || "—";
+    document.getElementById("nuevo-cups").value = codigo;
+
+    // Mostrar campos de fecha y consumo
+    document.getElementById("nuevo-info-cups").style.setProperty("display", "flex", "important");
+    document.getElementById("nuevo-campos-extra").style.setProperty("display", "flex", "important");
+    document.getElementById("nuevo-hr").style.display = "block";
+
+    estado.className = "form-text text-success";
+    estado.textContent = "✓ CUPS encontrado.";
+  } catch {
+    document.getElementById("nuevo-info-cups").style.setProperty("display", "none", "important");
+    document.getElementById("nuevo-campos-extra").style.setProperty("display", "none", "important");
+    document.getElementById("nuevo-hr").style.display = "none";
+    estado.className = "form-text text-danger";
+    estado.textContent = "✗ CUPS no encontrado en la base de datos.";
+  }
+});
+
+// Enviar nuevo registro → POST /api/registros { cups, fecha, consumo }
 document.getElementById("formNuevo").addEventListener("submit", async (event) => {
   event.preventDefault();
 
   const datos = {
-    // Estos nombres deben coincidir con RegistroDTO.java
-    cups: document.getElementById("nuevo-cups").value.trim(),
-    fecha: document.getElementById("nuevo-fecha").value,
-    consumo: parseFloat(document.getElementById("nuevo-consumo").value),
-    // Aunque el DAO actual no los use en el INSERT, el DTO los espera
-    municipio: document.getElementById("nuevo-municipio").value.trim(),
-    direccion: document.getElementById("nuevo-direccion").value.trim()
+    cups:    document.getElementById("nuevo-cups").value.trim(),
+    fecha:   document.getElementById("nuevo-fecha").value,
+    consumo: parseFloat(document.getElementById("nuevo-consumo").value)
   };
 
   try {
@@ -1011,13 +1054,8 @@ document.getElementById("formNuevo").addEventListener("submit", async (event) =>
       throw new Error(texto || "Error al crear registro");
     }
 
-    // Importante: Recargar datos para ver el nuevo registro
     await cargarYMostrarDatos();
-
-    // Cerrar modal
-    const modalElement = document.getElementById("modalNuevo");
-    const modalInstance = bootstrap.Modal.getInstance(modalElement);
-    modalInstance.hide();
+    bootstrap.Modal.getInstance(document.getElementById("modalNuevo")).hide();
 
   } catch (error) {
     mostrarErrorBootstrap("No se pudo crear el registro", error.message);
@@ -1030,9 +1068,11 @@ function abrirModalEdicion(id) {
   if (!registro) return;
 
   document.getElementById("editar-id").value = registro.id;
-  document.getElementById("editar-municipio").value = registro.municipio || "";
+  // Campos informativos (solo lectura)
+  document.getElementById("editar-municipio-texto").textContent = registro.municipio || "—";
+  document.getElementById("editar-direccion-texto").textContent = registro.cups_direccion || "—";
+  // Campos editables
   document.getElementById("editar-cups").value = registro.cups_codigo || "";
-  document.getElementById("editar-direccion").value = registro.cups_direccion || "";
   document.getElementById("editar-fecha").value = registro.fecha || "";
   document.getElementById("editar-consumo").value = registro.consumo ?? "";
 
@@ -1056,9 +1096,7 @@ async function guardarCambios(event) {
   const id = parseInt(document.getElementById("editar-id").value, 10);
 
   const datos = {
-    municipio: document.getElementById("editar-municipio").value.trim(),
     cups: document.getElementById("editar-cups").value.trim(),
-    direccion: document.getElementById("editar-direccion").value.trim(),
     fecha: document.getElementById("editar-fecha").value,
     consumo: parseFloat(document.getElementById("editar-consumo").value)
   };
@@ -1096,6 +1134,28 @@ document.getElementById("formEditar").addEventListener("submit", guardarCambios)
 
 function esFechaParcialValida(fecha) {
   return /^\d{4}(-\d{2}){0,2}$/.test(fecha);
+}
+
+// Expande una fecha parcial al mínimo posible para comparar como "desde"
+// "2023"    → "2023-01-01"
+// "2023-05" → "2023-05-01"
+// "2023-05-15" → "2023-05-15"
+function expandirFechaMin(fecha) {
+  if (!fecha) return "";
+  if (/^\d{4}$/.test(fecha))       return fecha + "-01-01";
+  if (/^\d{4}-\d{2}$/.test(fecha)) return fecha + "-01";
+  return fecha;
+}
+
+// Expande una fecha parcial al máximo posible para comparar como "hasta"
+// "2023"    → "2023-12-31"
+// "2023-05" → "2023-05-31"
+// "2023-05-15" → "2023-05-15"
+function expandirFechaMax(fecha) {
+  if (!fecha) return "";
+  if (/^\d{4}$/.test(fecha))       return fecha + "-12-31";
+  if (/^\d{4}-\d{2}$/.test(fecha)) return fecha + "-31";
+  return fecha;
 }
 
 /** Renderiza la paginación en la interfaz según el número total de registros.

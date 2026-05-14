@@ -281,29 +281,39 @@
         <div class="modal-body">
           <input type="hidden" id="editar-id">
 
-          <div class="mb-3">
-            <label for="editar-municipio" class="form-label">Municipio</label>
-            <input type="text" class="form-control" id="editar-municipio" required>
+          <!-- Campos de solo lectura (informativos) -->
+          <div class="alert alert-secondary py-2 px-3 mb-3 small">
+            <i class="bi bi-info-circle me-1"></i>
+            El municipio y la dirección no son editables desde aquí.
+          </div>
+          <div class="row mb-3">
+            <div class="col-md-4">
+              <label class="form-label text-muted small">Municipio</label>
+              <p class="form-control-plaintext fw-bold" id="editar-municipio-texto">—</p>
+            </div>
+            <div class="col-md-8">
+              <label class="form-label text-muted small">Dirección</label>
+              <p class="form-control-plaintext" id="editar-direccion-texto">—</p>
+            </div>
           </div>
 
+          <hr>
+
+          <!-- Campos editables -->
           <div class="mb-3">
-            <label for="editar-cups" class="form-label">CUPS</label>
+            <label for="editar-cups" class="form-label fw-bold">CUPS <span class="text-muted fw-normal small">(código del punto de suministro)</span></label>
             <input type="text" class="form-control" id="editar-cups" required>
           </div>
 
-          <div class="mb-3">
-            <label for="editar-direccion" class="form-label">Dirección</label>
-            <input type="text" class="form-control" id="editar-direccion" required>
-          </div>
-
-          <div class="mb-3">
-            <label for="editar-fecha" class="form-label">Fecha</label>
-            <input type="date" class="form-control" id="editar-fecha" required>
-          </div>
-
-          <div class="mb-3">
-            <label for="editar-consumo" class="form-label">Consumo</label>
-            <input type="number" step="0.01" class="form-control" id="editar-consumo" required>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="editar-fecha" class="form-label fw-bold">Fecha</label>
+              <input type="date" class="form-control" id="editar-fecha" required>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="editar-consumo" class="form-label fw-bold">Consumo (kWh)</label>
+              <input type="number" step="0.01" class="form-control" id="editar-consumo" required>
+            </div>
           </div>
         </div>
 
@@ -326,29 +336,52 @@
         </div>
 
         <div class="modal-body">
-          <div class="mb-3">
-            <label for="nuevo-municipio" class="form-label">Municipio</label>
-            <input type="text" class="form-control" id="nuevo-municipio" required>
+          <div class="alert alert-info small py-2 px-3 mb-3">
+            <i class="bi bi-info-circle me-1"></i>
+            Introduce el código CUPS y pulsa <strong>Buscar</strong>. El municipio y la dirección se rellenarán automáticamente si el CUPS existe en la base de datos.
           </div>
 
+          <!-- CUPS + botón buscar -->
           <div class="mb-3">
-            <label for="nuevo-cups" class="form-label">CUPS</label>
-            <input type="text" class="form-control" id="nuevo-cups" required>
+            <label for="nuevo-cups" class="form-label fw-bold">CUPS <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <input type="text" class="form-control" id="nuevo-cups"
+                     placeholder="ES00316..." required autocomplete="off">
+              <button type="button" class="btn btn-outline-secondary" id="btnBuscarCups">
+                <i class="bi bi-search"></i> Buscar
+              </button>
+            </div>
+            <div id="nuevo-cups-estado" class="form-text"></div>
           </div>
 
-          <div class="mb-3">
-            <label for="nuevo-direccion" class="form-label">Dirección</label>
-            <input type="text" class="form-control" id="nuevo-direccion" required>
+          <!-- Info de solo lectura (aparece tras buscar) -->
+          <div class="row mb-3" id="nuevo-info-cups" style="display:none!important">
+            <div class="col-md-4">
+              <label class="form-label text-muted small">Municipio</label>
+              <p class="form-control-plaintext fw-bold mb-0" id="nuevo-municipio-texto">—</p>
+            </div>
+            <div class="col-md-8">
+              <label class="form-label text-muted small">Dirección</label>
+              <p class="form-control-plaintext mb-0" id="nuevo-direccion-texto">—</p>
+            </div>
           </div>
 
-          <div class="mb-3">
-            <label for="nuevo-fecha" class="form-label">Fecha</label>
-            <input type="date" class="form-control" id="nuevo-fecha" required>
-          </div>
+          <hr id="nuevo-hr" style="display:none">
 
-          <div class="mb-3">
-            <label for="nuevo-consumo" class="form-label">Consumo</label>
-            <input type="number" step="0.01" class="form-control" id="nuevo-consumo" required>
+          <!-- Fecha y consumo (aparecen tras buscar) -->
+          <div class="row" id="nuevo-campos-extra" style="display:none!important">
+            <div class="col-md-6 mb-3">
+              <label for="nuevo-fecha" class="form-label fw-bold">
+                Fecha <span class="text-danger">*</span>
+              </label>
+              <input type="date" class="form-control" id="nuevo-fecha" required>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="nuevo-consumo" class="form-label fw-bold">
+                Consumo (kWh) <span class="text-danger">*</span>
+              </label>
+              <input type="number" step="0.01" class="form-control" id="nuevo-consumo" required>
+            </div>
           </div>
         </div>
 

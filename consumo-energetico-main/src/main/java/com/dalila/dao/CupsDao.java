@@ -1,41 +1,69 @@
 package com.dalila.dao;
 
 import com.dalila.db.Db;
+import com.dalila.dto.CupsDto;
 import com.dalila.entity.Cups;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * DAO de CUPS. Solo acceso a datos, sin lógica de negocio.
+ * Devuelve entidades (Cups) o DTOs cuando el JOIN aporta valor directo (findByCodigo).
+ */
 public class CupsDao {
 
-    public List<Cups> findAll(int limit) throws SQLException {
-        String sql = """
-                SELECT codigo, direccion, codigo_postal, municipio_id, distribuidor_id
-                FROM cups
-                ORDER BY codigo
-                LIMIT ?
-                """;
+    // ── Lectura ──────────────────────────────────────────────────────────────
 
-        List<Cups> out = new ArrayList<>();
+    /**
+     * Lista CUPS con JOIN a municipio para incluir el nombre.
+     * Soporta búsqueda parcial por municipio y límite de resultados.
+     */
+    public List<CupsDto> findAll(String municipio, int limit) throws SQLException {
+        StringBuilder sql = new StringBuilder("""
+                SELECT c.codigo, c.direccion, c.codigo_postal,
+                       c.municipio_id, m.nombre AS municipio, c.distribuidor_id
+                FROM cups c
+                LEFT JOIN municipio m ON m.id = c.municipio_id
+                WHERE 1=1
+                """);
+
+        List<Object> params = new ArrayList<>();
+
+        if (municipio != null && !municipio.isBlank()) {
+            sql.append(" AND LOWER(m.nombre) LIKE ? ");
+            params.add("%" + municipio.toLowerCase() + "%");
+        }
+
+        sql.append(" ORDER BY c.codigo LIMIT ?");
+        params.add(limit);
+
+        List<CupsDto> out = new ArrayList<>();
         try (Connection con = Db.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+             PreparedStatement ps = con.prepareStatement(sql.toString())) {
 
-            ps.setInt(1, limit);
+            for (int i = 0; i < params.size(); i++) ps.setObject(i + 1, params.get(i));
 
             try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) out.add(map(rs));
+                while (rs.next()) out.add(mapDto(rs));
             }
         }
         return out;
     }
 
-    public Cups findByCodigo(String codigo) {
+    /**
+     * Busca un CUPS por código exacto. Incluye nombre del municipio.
+     * Devuelve null si no existe.
+     */
+    public CupsDto findByCodigo(String codigo) throws SQLException {
         String sql = """
-            SELECT codigo, direccion, codigo_postal, distribuidor_id
-            FROM cups
-            WHERE codigo = ?
-            """;
+                SELECT c.codigo, c.direccion, c.codigo_postal,
+                       c.municipio_id, m.nombre AS municipio, c.distribuidor_id
+                FROM cups c
+                LEFT JOIN municipio m ON m.id = c.municipio_id
+                WHERE c.codigo = ?
+                """;
 
         try (Connection con = Db.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -43,79 +71,44 @@ public class CupsDao {
             ps.setString(1, codigo);
 
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    Cups cups = new Cups();
-                    cups.setCodigo(rs.getString("codigo"));
-                    cups.setDireccion(rs.getString("direccion"));
-                    cups.setCodigoPostal(rs.getInt("codigo_postal"));
-                    cups.setDistribuidorId(rs.getInt("distribuidor_id"));
-                    return cups;
-                }
+                if (rs.next()) return mapDto(rs);
             }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("Error obteniendo cups por codigo", e);
         }
-
         return null;
     }
 
-    // Filtrar por municipio (útil para REST: GET /cups?municipio=ADEJE)
-    public List<Cups> findByMunicipioNombre(String municipioNombre, int limit) throws SQLException {
+    /**
+     * Lista todos los CUPS de un municipio dado su ID.
+     */
+    public List<CupsDto> findByMunicipioId(long municipioId) throws SQLException {
         String sql = """
-                SELECT c.codigo, c.direccion, c.codigo_postal, c.municipio_id, c.distribuidor_id
+                SELECT c.codigo, c.direccion, c.codigo_postal,
+                       c.municipio_id, m.nombre AS municipio, c.distribuidor_id
                 FROM cups c
-                JOIN municipio m ON m.id = c.municipio_id
-                WHERE m.nombre = ?
+                LEFT JOIN municipio m ON m.id = c.municipio_id
+                WHERE c.municipio_id = ?
                 ORDER BY c.codigo
-                LIMIT ?
                 """;
 
-        List<Cups> out = new ArrayList<>();
+        List<CupsDto> out = new ArrayList<>();
         try (Connection con = Db.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
 
-            ps.setString(1, municipioNombre);
-            ps.setInt(2, limit);
+            ps.setLong(1, municipioId);
 
             try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) out.add(map(rs));
+                while (rs.next()) out.add(mapDto(rs));
             }
         }
         return out;
     }
 
-    // Filtrar por distribuidor (GET /cups?distribuidor=EDISTRIBUCIÓN)
-    public List<Cups> findByDistribuidorNombre(String distribuidorNombre, int limit) throws SQLException {
-        String sql = """
-                SELECT c.codigo, c.direccion, c.codigo_postal, c.municipio_id, c.distribuidor_id
-                FROM cups c
-                JOIN distribuidor d ON d.id = c.distribuidor_id
-                WHERE d.nombre = ?
-                ORDER BY c.codigo
-                LIMIT ?
-                """;
+    // ── Escritura ─────────────────────────────────────────────────────────────
 
-        List<Cups> out = new ArrayList<>();
-        try (Connection con = Db.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-
-            ps.setString(1, distribuidorNombre);
-            ps.setInt(2, limit);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) out.add(map(rs));
-            }
-        }
-        return out;
-    }
-
-    // CREATE (POST /cups) -> normalmente no lo usarás si tus datos vienen del JSON, pero queda profesional
-    public boolean create(Cups c) throws SQLException {
+    public void create(Cups c) throws SQLException {
         String sql = """
                 INSERT INTO cups(codigo, direccion, codigo_postal, municipio_id, distribuidor_id)
-                VALUES (?,?,?,?,?)
+                VALUES (?, ?, ?, ?, ?)
                 """;
 
         try (Connection con = Db.getConnection();
@@ -123,25 +116,18 @@ public class CupsDao {
 
             ps.setString(1, c.getCodigo());
             ps.setString(2, c.getDireccion());
-
             if (c.getCodigoPostal() == null) ps.setNull(3, Types.INTEGER);
-            else ps.setInt(3, c.getCodigoPostal());
-
+            else                             ps.setInt(3, c.getCodigoPostal());
             ps.setInt(4, c.getMunicipioId());
             ps.setInt(5, c.getDistribuidorId());
-
-            return ps.executeUpdate() == 1;
+            ps.executeUpdate();
         }
     }
 
-    // UPDATE (PUT /cups/{codigo})
-    public boolean update(Cups c) throws SQLException {
+    public void update(Cups c) throws SQLException {
         String sql = """
                 UPDATE cups
-                SET direccion = ?,
-                    codigo_postal = ?,
-                    municipio_id = ?,
-                    distribuidor_id = ?
+                SET direccion = ?, codigo_postal = ?, municipio_id = ?, distribuidor_id = ?
                 WHERE codigo = ?
                 """;
 
@@ -149,42 +135,37 @@ public class CupsDao {
              PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setString(1, c.getDireccion());
-
             if (c.getCodigoPostal() == null) ps.setNull(2, Types.INTEGER);
-            else ps.setInt(2, c.getCodigoPostal());
-
+            else                             ps.setInt(2, c.getCodigoPostal());
             ps.setInt(3, c.getMunicipioId());
             ps.setInt(4, c.getDistribuidorId());
             ps.setString(5, c.getCodigo());
-
-            return ps.executeUpdate() == 1;
+            ps.executeUpdate();
         }
     }
 
-    // DELETE (DELETE /cups/{codigo})
-    // OJO: si hay consumos asociados, por FK no te dejará borrar. Eso es correcto.
-    public boolean delete(String codigo) throws SQLException {
+    public void delete(String codigo) throws SQLException {
         String sql = "DELETE FROM cups WHERE codigo = ?";
 
         try (Connection con = Db.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setString(1, codigo);
-            return ps.executeUpdate() == 1;
+            ps.executeUpdate();
         }
     }
 
-    private Cups map(ResultSet rs) throws SQLException {
-        Cups c = new Cups();
-        c.setCodigo(rs.getString("codigo"));
-        c.setDireccion(rs.getString("direccion"));
+    // ── Mappers ───────────────────────────────────────────────────────────────
 
+    private CupsDto mapDto(ResultSet rs) throws SQLException {
         int cp = rs.getInt("codigo_postal");
-        if (rs.wasNull()) c.setCodigoPostal(null);
-        else c.setCodigoPostal(cp);
-
-        c.setMunicipioId(rs.getInt("municipio_id"));
-        c.setDistribuidorId(rs.getInt("distribuidor_id"));
-        return c;
+        return new CupsDto(
+                rs.getString("codigo"),
+                rs.getString("direccion"),
+                rs.wasNull() ? null : cp,
+                rs.getInt("municipio_id"),
+                rs.getString("municipio"),
+                rs.getInt("distribuidor_id")
+        );
     }
 }

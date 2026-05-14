@@ -14,47 +14,77 @@ import java.util.List;
 @WebServlet("/generar-pdf")
 public class PdfServlet extends HttpServlet {
 
-    private PdfService pdfService = new PdfService();
-    private RegistroService registroService = new RegistroService();
+    private final PdfService      pdfService      = new PdfService();
+    private final RegistroService registroService = new RegistroService();
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
+
         // 1. Opciones de visualización
-        boolean resGlobal  = Boolean.parseBoolean(request.getParameter("imprimirResumenGlobal"));
-        boolean resAnual   = Boolean.parseBoolean(request.getParameter("imprimirTarjetasAnuales"));
-        boolean conGrafico = Boolean.parseBoolean(request.getParameter("imprimirGrafico"));
-        boolean conTabla   = Boolean.parseBoolean(request.getParameter("imprimirTabla"));
-        boolean conDetalles = Boolean.parseBoolean(request.getParameter("incluirDetallesTarjetas"));
+        boolean resGlobal   = parseBoolean(request, "imprimirResumenGlobal");
+        boolean resAnual    = parseBoolean(request, "imprimirTarjetasAnuales");
+        boolean conGrafico  = parseBoolean(request, "imprimirGrafico");
+        boolean conTabla    = parseBoolean(request, "imprimirTabla");
+        boolean conDetalles = parseBoolean(request, "incluirDetallesTarjetas");
 
-        // 2. Parámetros de rango y años (antes se ignoraban, ahora se leen)
-        String aniosTarjetas = request.getParameter("aniosTarjetas") != null ? request.getParameter("aniosTarjetas") : "";
-        String rangoGrafico  = request.getParameter("rangoGrafico")  != null ? request.getParameter("rangoGrafico")  : "";
-        String rangoTabla    = request.getParameter("rangoTabla")    != null ? request.getParameter("rangoTabla")    : "";
+        // 2. Parámetros de rango y años
+        String aniosTarjetas = parseString(request, "aniosTarjetas");
+        String rangoGrafico  = parseString(request, "rangoGrafico");
+        String rangoTabla    = parseString(request, "rangoTabla");
 
-        // 3. Filtros
-        String cups      = request.getParameter("cups");
-        String direccion = request.getParameter("direccion");
-        String municipio = request.getParameter("municipio");
-        String fechaMin  = request.getParameter("fechaMin");
-        String fechaMax  = request.getParameter("fechaMax");
+        // 3. Filtros de texto
+        String cups      = parseString(request, "cups");
+        String direccion = parseString(request, "direccion");
+        String municipio = parseString(request, "municipio");
+        String fechaMin  = parseString(request, "fechaMin");
+        String fechaMax  = parseString(request, "fechaMax");
 
-        Double consumoMin = request.getParameter("consumoMin") != null && !request.getParameter("consumoMin").isEmpty()
-                ? Double.parseDouble(request.getParameter("consumoMin")) : null;
-        Double consumoMax = request.getParameter("consumoMax") != null && !request.getParameter("consumoMax").isEmpty()
-                ? Double.parseDouble(request.getParameter("consumoMax")) : null;
+        // 4. Filtros numéricos — protegidos contra "null" literal y vacío
+        Double consumoMin = parseDouble(request, "consumoMin");
+        Double consumoMax = parseDouble(request, "consumoMax");
 
-        // 4. Datos filtrados
-        List<RegistroDTO> registrosFiltrados = registroService.findFiltered(
+        // 5. Datos filtrados
+        List<RegistroDTO> registros = registroService.findFiltered(
                 municipio, cups, direccion, fechaMin, fechaMax, consumoMin, consumoMax
         );
 
-        // 5. Generar PDF pasando los parámetros que antes se ignoraban
+        // 6. Generar PDF
         byte[] pdf = pdfService.generarPdfRegistros(
-                registrosFiltrados, resGlobal, resAnual, conDetalles, conGrafico, conTabla,
+                registros, resGlobal, resAnual, conDetalles, conGrafico, conTabla,
                 aniosTarjetas, rangoGrafico, rangoTabla
         );
 
         response.setContentType("application/pdf");
         response.setContentLength(pdf.length);
         response.getOutputStream().write(pdf);
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private boolean parseBoolean(HttpServletRequest req, String name) {
+        return Boolean.parseBoolean(req.getParameter(name));
+    }
+
+    /**
+     * Devuelve "" si el parámetro es null, vacío o el literal "null".
+     * Evita que strings como "null" lleguen a la capa de datos.
+     */
+    private String parseString(HttpServletRequest req, String name) {
+        String val = req.getParameter(name);
+        if (val == null || val.isBlank() || val.equalsIgnoreCase("null")) return "";
+        return val.trim();
+    }
+
+    /**
+     * Parsea Double de forma segura.
+     * Devuelve null si el parámetro está ausente, vacío o es el literal "null".
+     */
+    private Double parseDouble(HttpServletRequest req, String name) {
+        String val = req.getParameter(name);
+        if (val == null || val.isBlank() || val.equalsIgnoreCase("null")) return null;
+        try {
+            return Double.parseDouble(val.trim());
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 }
